@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, CalendarDays, Award, Coins, LogOut } from 'lucide-react';
+import { Home, CalendarDays, Award, Coins, LogOut, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -10,6 +10,8 @@ import CalendarView from './views/CalendarView';
 import AchievementView from './views/AchievementView';
 import ShopView from './views/ShopView';
 import AdminDashboard from './views/AdminDashboard';
+import CharacterSelectView from './views/CharacterSelectView';
+import DailyReportView from './views/DailyReportView';
 
 // ===== ログアウト確認モーダル =====
 function LogoutConfirm({ show, onClose, onConfirm }: {
@@ -55,7 +57,7 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 // ===== 認証済みメイン画面 =====
 function MainApp() {
   const { profile, signOut } = useAuth();
-  const { userData, loading, updateUser } = useUserData();
+  const { userData, loading, updateUser, submitDailyReport } = useUserData();
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -70,6 +72,23 @@ function MainApp() {
           <div className="text-5xl mb-3 animate-bounce">🐾</div>
           <p className="text-white/80 font-heading">読み込み中...</p>
         </div>
+      </div>
+    );
+  }
+
+  // 初回ログイン or キャラ未選択 → キャラクター選択画面
+  if (!userData.selectedCharacterId || currentView === 'character-select') {
+    return (
+      <div className="max-w-lg mx-auto min-h-screen">
+        <CharacterSelectView
+          user={userData}
+          isFirstTime={!userData.selectedCharacterId}
+          onSelect={async (characterId) => {
+            await updateUser({ ...userData, selectedCharacterId: characterId });
+            setCurrentView('home');
+          }}
+          onBack={userData.selectedCharacterId ? () => setCurrentView('home') : undefined}
+        />
       </div>
     );
   }
@@ -125,12 +144,16 @@ function MainApp() {
             user={userData}
             onUpdateUser={(u) => updateUser(u)}
             onReset={() => {}}
+            onOpenCharacterSelect={() => setCurrentView('character-select')}
           />
         )}
         {currentView === 'calendar' && <CalendarView user={userData} />}
         {currentView === 'achievement' && <AchievementView user={userData} />}
         {currentView === 'shop' && (
           <ShopView user={userData} onUpdateUser={(u) => updateUser(u)} />
+        )}
+        {currentView === 'report' && (
+          <DailyReportView user={userData} onSubmit={submitDailyReport} />
         )}
       </main>
 
@@ -140,6 +163,7 @@ function MainApp() {
           {([
             { view: 'home' as ViewType, icon: Home, label: 'ホーム' },
             { view: 'calendar' as ViewType, icon: CalendarDays, label: 'カレンダー' },
+            { view: 'report' as ViewType, icon: ClipboardList, label: 'にっぽう' },
             { view: 'achievement' as ViewType, icon: Award, label: 'じっせき' },
             { view: 'shop' as ViewType, icon: Coins, label: 'ショップ' },
           ] as const).map(({ view, icon: Icon, label }) => (

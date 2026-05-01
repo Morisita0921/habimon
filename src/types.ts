@@ -24,6 +24,8 @@ export interface User {
   coinHistory: CoinTransaction[];
   // 物品交換申請
   exchangeRequests: ExchangeRequest[];
+  // 日報
+  dailyReports: DailyReport[];
 }
 
 // 物品交換カタログのアイテム
@@ -118,7 +120,16 @@ export interface Facility {
   adminPassword?: string; // 管理者パスワード（プロトタイプ用）
 }
 
-export type ViewType = 'home' | 'calendar' | 'achievement' | 'shop' | 'admin' | 'parent' | 'character-select';
+export type ViewType = 'home' | 'calendar' | 'achievement' | 'shop' | 'admin' | 'parent' | 'character-select' | 'report';
+
+// 日報
+export interface DailyReport {
+  id: string;
+  date: string;       // YYYY-MM-DD
+  morning: string;    // 午前の活動
+  afternoon: string;  // 午後の活動
+  submittedAt: string;
+}
 
 // Supabase profiles テーブルの型
 export interface Profile {

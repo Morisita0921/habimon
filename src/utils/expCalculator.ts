@@ -9,6 +9,8 @@ export const EXP_VALUES = {
   streak14: 50,
   moodRecord: 5,
   monthlyGoal: 100,
+  dailyReport: 15,       // 日報提出
+  dailyReportFull: 10,   // 午前・午後の両方記入ボーナス
 };
 
 export function calculateCheckInExp(currentStreak: number): number {

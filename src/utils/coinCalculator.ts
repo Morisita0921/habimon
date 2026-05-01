@@ -3,6 +3,8 @@
 export const COIN_VALUES = {
   checkIn: 100,
   moodRecord: 50,
+  dailyReport: 80,       // 日報提出
+  dailyReportFull: 50,   // 午前・午後の両方記入ボーナス
 } as const;
 
 export const STREAK_BONUSES: { days: number; coins: number }[] = [

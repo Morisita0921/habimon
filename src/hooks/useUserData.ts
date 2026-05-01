@@ -3,10 +3,12 @@
  * 既存の User 型に変換して返す（既存コンポーネントとの互換性を保つ）
  */
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import type { User, CheckInRecord, CoinTransaction, ExchangeRequest } from '../types';
+import { supabaseAdmin as supabase } from '../lib/supabase';
+import type { User, CheckInRecord, CoinTransaction, ExchangeRequest, DailyReport } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { getTodayString } from '../utils/dateUtils';
+import { calculateNewLevel, EXP_VALUES } from '../utils/expCalculator';
+import { COIN_VALUES } from '../utils/coinCalculator';
 
 export function useUserData() {
   const { user: authUser, profile, refreshProfile } = useAuth();
@@ -38,6 +40,13 @@ export function useUserData() {
       .eq('user_id', userId)
       .order('created_at', { ascending: true });
 
+    // 日報を取得
+    const { data: reportRows } = await supabase
+      .from('daily_reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: true });
+
     const checkInHistory: CheckInRecord[] = (checkIns ?? []).map((r) => ({
       date: r.date,
       mood: r.mood as 1 | 2 | 3 | 4 | 5,
@@ -64,6 +73,14 @@ export function useUserData() {
       note: r.note,
     }));
 
+    const dailyReports: DailyReport[] = (reportRows ?? []).map((r) => ({
+      id: r.id,
+      date: r.date,
+      morning: r.morning ?? '',
+      afternoon: r.afternoon ?? '',
+      submittedAt: r.submitted_at,
+    }));
+
     return {
       id: profile.id,
       name: profile.name,
@@ -81,6 +98,7 @@ export function useUserData() {
       checkInHistory,
       coinHistory,
       exchangeRequests,
+      dailyReports,
     };
   }, [profile]);
 
@@ -147,6 +165,38 @@ export function useUserData() {
   const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!authUser) return;
 
+    // checkInHistory に新しいエントリがあれば check_ins テーブルに保存
+    if (updates.checkInHistory) {
+      const existingCount = userData?.checkInHistory.length ?? 0;
+      const newEntries = updates.checkInHistory.slice(existingCount);
+      for (const entry of newEntries) {
+        await supabase.from('check_ins').upsert({
+          user_id: authUser.id,
+          date: entry.date,
+          mood: entry.mood,
+          checked_in: entry.checkedIn,
+        });
+      }
+    }
+
+    // coinHistory に新しいエントリがあれば coin_transactions テーブルに保存
+    if (updates.coinHistory) {
+      const existingCount = userData?.coinHistory.length ?? 0;
+      const newTxs = updates.coinHistory.slice(existingCount);
+      if (newTxs.length > 0) {
+        await supabase.from('coin_transactions').insert(
+          newTxs.map((tx) => ({
+            id: tx.id,
+            user_id: authUser.id,
+            date: tx.date,
+            type: tx.type,
+            amount: tx.amount,
+            reason: tx.reason,
+          }))
+        );
+      }
+    }
+
     const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (updates.level !== undefined) dbUpdates.level = updates.level;
     if (updates.exp !== undefined) dbUpdates.exp = updates.exp;
@@ -163,7 +213,7 @@ export function useUserData() {
     await supabase.from('profiles').update(dbUpdates).eq('id', authUser.id);
     await refreshProfile();
     setUserData((prev) => prev ? { ...prev, ...updates } : null);
-  }, [authUser, refreshProfile]);
+  }, [authUser, userData, refreshProfile]);
 
   // 交換申請
   const addExchangeRequest = useCallback(async (req: ExchangeRequest) => {
@@ -184,5 +234,95 @@ export function useUserData() {
     } : null);
   }, [authUser]);
 
-  return { userData, loading, checkIn, updateUser, addExchangeRequest, setUserData };
+  // 日報提出
+  const submitDailyReport = useCallback(async (morning: string, afternoon: string) => {
+    if (!authUser || !userData) return;
+    const today = getTodayString();
+    const now = new Date().toISOString();
+    const isFull = morning.trim().length > 0 && afternoon.trim().length > 0;
+
+    // daily_reports に保存
+    const { data: inserted } = await supabase
+      .from('daily_reports')
+      .insert({
+        user_id: authUser.id,
+        date: today,
+        morning: morning.trim(),
+        afternoon: afternoon.trim(),
+        submitted_at: now,
+      })
+      .select()
+      .single();
+
+    if (!inserted) return;
+
+    // EXP 計算
+    const expGain = EXP_VALUES.dailyReport + (isFull ? EXP_VALUES.dailyReportFull : 0);
+    const newExp = userData.exp + expGain;
+    const newLevel = calculateNewLevel(newExp);
+    const expToNextValue = newLevel < 5 ? [0, 100, 300, 600, 1000][newLevel] : 0;
+
+    // コイン計算
+    const coinGain = COIN_VALUES.dailyReport + (isFull ? COIN_VALUES.dailyReportFull : 0);
+
+    // コイン履歴
+    const txId = `coin-report-${Date.now()}`;
+    const coinReason = isFull ? 'にっぽう提出（午前・午後）' : 'にっぽう提出';
+    await supabase.from('coin_transactions').insert({
+      id: txId,
+      user_id: authUser.id,
+      date: today,
+      type: 'earn',
+      amount: coinGain,
+      reason: coinReason,
+    });
+
+    // バッジ判定
+    const newReports = [...userData.dailyReports, {
+      id: inserted.id,
+      date: today,
+      morning: morning.trim(),
+      afternoon: afternoon.trim(),
+      submittedAt: now,
+    }];
+    const fullReportCount = newReports.filter(
+      (r) => r.morning.length > 0 && r.afternoon.length > 0
+    ).length;
+
+    const newBadges = [...userData.badges];
+    if (!newBadges.includes('report-first')) newBadges.push('report-first');
+    if (newReports.length >= 10 && !newBadges.includes('report-10')) newBadges.push('report-10');
+    if (newReports.length >= 30 && !newBadges.includes('report-30')) newBadges.push('report-30');
+    if (fullReportCount >= 5 && !newBadges.includes('report-full')) newBadges.push('report-full');
+
+    // プロフィール更新
+    await supabase.from('profiles').update({
+      exp: newExp,
+      level: newLevel,
+      exp_to_next: expToNextValue,
+      akashi_coins: userData.akashiCoins + coinGain,
+      badges: newBadges,
+      updated_at: now,
+    }).eq('id', authUser.id);
+
+    await refreshProfile();
+
+    setUserData((prev) => prev ? {
+      ...prev,
+      exp: newExp,
+      level: newLevel,
+      expToNext: expToNextValue,
+      akashiCoins: prev.akashiCoins + coinGain,
+      badges: newBadges,
+      dailyReports: newReports,
+      coinHistory: [
+        ...prev.coinHistory,
+        { id: txId, date: today, type: 'earn', amount: coinGain, reason: coinReason },
+      ],
+    } : null);
+
+    return { expGain, coinGain, newBadges: newBadges.filter((b) => !userData.badges.includes(b)) };
+  }, [authUser, userData, refreshProfile]);
+
+  return { userData, loading, checkIn, updateUser, addExchangeRequest, setUserData, submitDailyReport };
 }

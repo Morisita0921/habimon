@@ -1,58 +1,47 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
 import AdminCoinGrant from './AdminCoinGrant';
 import AdminExchangeRequests from './AdminExchangeRequests';
+import AdminUserCreate from './AdminUserCreate';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create';
 
 export default function AdminDashboard() {
-  const { facilityData: facility, loading, updateUser: onUpdateUser } = useAdminData();
-
-  if (loading || !facility) {
-    return (
-      <div className="min-h-screen bg-admin-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-2 animate-bounce">📊</div>
-          <p className="text-gray-500">データを読み込み中...</p>
-        </div>
-      </div>
-    );
-  }
-
+  const { facilityData: facility, loading, updateUser: onUpdateUser, refresh: fetchAllData } = useAdminData();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+
   const today = new Date();
   const todayStr = getTodayString();
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
-
-  const todayAttendees = facility.users.filter((u) =>
-    u.checkInHistory.some((r) => r.date === todayStr && r.checkedIn)
-  ).length;
-
+  const users = facility?.users ?? [];
   const businessDays = getBusinessDaysInMonth(currentYear, currentMonth);
 
+  const todayAttendees = useMemo(() =>
+    users.filter((u) => u.checkInHistory.some((r) => r.date === todayStr && r.checkedIn)).length,
+  [users, todayStr]);
+
   const monthlyRate = useMemo(() => {
-    if (facility.users.length === 0 || businessDays === 0) return 0;
-    const totalPossible = facility.users.length * businessDays;
-    const totalAttended = facility.users.reduce((sum, u) => {
+    if (users.length === 0 || businessDays === 0) return 0;
+    const totalPossible = users.length * businessDays;
+    const totalAttended = users.reduce((sum, u) => {
       return sum + u.checkInHistory.filter((r) => {
         const d = new Date(r.date);
         return r.checkedIn && d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth;
       }).length;
     }, 0);
     return Math.round((totalAttended / totalPossible) * 100);
-  }, [facility.users, businessDays, currentYear, currentMonth]);
+  }, [users, businessDays, currentYear, currentMonth]);
 
   const avgStreak = useMemo(() => {
-    if (facility.users.length === 0) return 0;
-    return Math.round(facility.users.reduce((sum, u) => sum + u.streak, 0) / facility.users.length);
-  }, [facility.users]);
+    if (users.length === 0) return 0;
+    return Math.round(users.reduce((sum, u) => sum + u.streak, 0) / users.length);
+  }, [users]);
 
-  // 月別稼働率データ（過去6ヶ月）
   const chartData = useMemo(() => {
     const data = [];
     for (let i = 5; i >= 0; i--) {
@@ -60,8 +49,8 @@ export default function AdminDashboard() {
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
       const bd = getBusinessDaysInMonth(y, m);
-      const totalPossible = facility.users.length * bd;
-      const totalAttended = facility.users.reduce((sum, u) => {
+      const totalPossible = users.length * bd;
+      const totalAttended = users.reduce((sum, u) => {
         return sum + u.checkInHistory.filter((r) => {
           const rd = new Date(r.date);
           return r.checkedIn && rd.getFullYear() === y && rd.getMonth() + 1 === m;
@@ -73,11 +62,10 @@ export default function AdminDashboard() {
       });
     }
     return data;
-  }, [facility.users, currentYear, currentMonth]);
+  }, [users, currentYear, currentMonth]);
 
-  // 利用者の今月出席データ
   const userStats = useMemo(() => {
-    return facility.users.map((u) => {
+    return users.map((u) => {
       const monthCheckIns = u.checkInHistory.filter((r) => {
         const d = new Date(r.date);
         return r.checkedIn && d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth;
@@ -93,15 +81,22 @@ export default function AdminDashboard() {
       const avgMood = recentMoods.length > 0
         ? Math.round(recentMoods.reduce((a, b) => a + b, 0) / recentMoods.length)
         : 0;
-
       return { user: u, monthCheckIns, rate, lastCheckIn, avgMood };
     }).sort((a, b) => b.rate - a.rate);
-  }, [facility.users, currentYear, currentMonth, businessDays]);
+  }, [users, currentYear, currentMonth, businessDays]);
 
-  const getMoodIcon = (mood: number) => {
-    const icons = ['−', '😢', '😟', '😐', '😊', '😄'];
-    return icons[mood] || '−';
-  };
+  if (loading || !facility) {
+    return (
+      <div className="min-h-screen bg-admin-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-2 animate-bounce">📊</div>
+          <p className="text-gray-500">データを読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getMoodIcon = (mood: number) => ['−', '😢', '😟', '😐', '😊', '😄'][mood] || '−';
 
   return (
     <div className="min-h-screen bg-admin-bg">
@@ -163,6 +158,17 @@ export default function AdminDashboard() {
               ) : null;
             })()}
           </button>
+          <button
+            onClick={() => setActiveTab('user-create')}
+            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+              activeTab === 'user-create'
+                ? 'text-navy border-navy'
+                : 'text-gray-400 border-transparent hover:text-gray-600'
+            }`}
+          >
+            <UserPlus size={18} />
+            メンバー追加
+          </button>
         </div>
       </div>
 
@@ -174,6 +180,11 @@ export default function AdminDashboard() {
       {/* 申請管理タブ */}
       {activeTab === 'exchange' && (
         <AdminExchangeRequests facility={facility} onUpdateUser={onUpdateUser} />
+      )}
+
+      {/* メンバー追加タブ */}
+      {activeTab === 'user-create' && (
+        <AdminUserCreate onCreated={fetchAllData} />
       )}
 
       {/* ダッシュボードタブ */}

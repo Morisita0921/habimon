@@ -3,7 +3,7 @@
  * 全ユーザーのプロフィール・チェックイン情報をSupabaseから取得
  */
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import type { User, CheckInRecord, CoinTransaction, ExchangeRequest } from '../types';
 
 export interface AdminFacilityData {

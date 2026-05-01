@@ -57,4 +57,48 @@ export const BADGES: Badge[] = [
     icon: '📝',
     condition: '体調記録を20回',
   },
+  // 通所実績バッジ
+  {
+    id: 'total-30',
+    name: '30かいかよったよ',
+    description: '通算30日出席した',
+    icon: '🎯',
+    condition: '通算出席30日',
+  },
+  {
+    id: 'total-50',
+    name: 'かよいびと',
+    description: '通算50日出席した',
+    icon: '🌈',
+    condition: '通算出席50日',
+  },
+  // 日報バッジ
+  {
+    id: 'report-first',
+    name: 'はじめての日報',
+    description: '初めて日報を提出した',
+    icon: '📋',
+    condition: '日報を初めて提出',
+  },
+  {
+    id: 'report-10',
+    name: '日報10かい',
+    description: '日報を10回提出した',
+    icon: '📑',
+    condition: '日報10回提出',
+  },
+  {
+    id: 'report-30',
+    name: '日報マスター',
+    description: '日報を30回提出した',
+    icon: '📚',
+    condition: '日報30回提出',
+  },
+  {
+    id: 'report-full',
+    name: 'ていねいな記録',
+    description: '午前・午後の両方を書いた日報を5回提出した',
+    icon: '✍️',
+    condition: '午前・午後の両方記入×5回',
+  },
 ];
