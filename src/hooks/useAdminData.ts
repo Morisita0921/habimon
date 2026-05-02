@@ -102,6 +102,7 @@ export function useAdminData() {
         checkInHistory,
         coinHistory,
         exchangeRequests,
+        dailyReports: [],
       };
     });
 

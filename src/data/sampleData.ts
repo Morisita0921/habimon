@@ -115,6 +115,7 @@ function createUser(
     equippedCosmetics,
     coinHistory: [],
     exchangeRequests: [],
+    dailyReports: [],
   };
 }
 
