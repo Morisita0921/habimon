@@ -12,6 +12,15 @@ interface DailyReportViewProps {
   >;
 }
 
+const ACTIVITY_OPTIONS = [
+  '動画編集',
+  '画像編集',
+  'e-スポーツ',
+  'PC取り扱い練習',
+  '軽作業',
+  '手芸',
+] as const;
+
 export default function DailyReportView({ user, onSubmit }: DailyReportViewProps) {
   const today = getTodayString();
   const { isOpenDay, loading: scheduleLoading } = useOpeningSchedule();
@@ -19,18 +28,24 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
   const todayReport = user.dailyReports.find((r) => r.date === today);
   const alreadySubmitted = !!todayReport;
 
-  const [morning, setMorning] = useState('');
-  const [afternoon, setAfternoon] = useState('');
+  const [morningActivity, setMorningActivity] = useState('');
+  const [morningNote, setMorningNote] = useState('');
+  const [afternoonActivity, setAfternoonActivity] = useState('');
+  const [afternoonNote, setAfternoonNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [reward, setReward] = useState<{ expGain: number; coinGain: number; newBadges: string[] } | null>(null);
 
-  const isFull = morning.trim().length > 0 && afternoon.trim().length > 0;
-  const canSubmit = morning.trim().length > 0 || afternoon.trim().length > 0;
+  const morningText = morningActivity + (morningNote ? `（${morningNote}）` : '');
+  const afternoonText = afternoonActivity + (afternoonNote ? `（${afternoonNote}）` : '');
+  const morningComplete = morningActivity.length > 0 && morningNote.trim().length > 0;
+  const afternoonComplete = afternoonActivity.length > 0 && afternoonNote.trim().length > 0;
+  const isFull = morningComplete && afternoonComplete;
+  const canSubmit = morningComplete || afternoonComplete;
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
-    const result = await onSubmit(morning, afternoon);
+    const result = await onSubmit(morningText, afternoonText);
     if (result) setReward(result);
     setSubmitting(false);
   };
@@ -152,12 +167,24 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <label className="block text-xs font-bold text-gray-500 mb-1.5">
               ☀️ 午前にやったこと
             </label>
-            <textarea
-              value={morning}
-              onChange={(e) => setMorning(e.target.value)}
-              placeholder="例）パソコン作業、清掃、グループワーク…"
-              rows={3}
-              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+            <select
+              value={morningActivity}
+              onChange={(e) => setMorningActivity(e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 p-3 text-sm bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 ${
+                morningActivity ? 'text-gray-700' : 'text-gray-300'
+              }`}
+            >
+              <option value="">選んでください</option>
+              {ACTIVITY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={morningNote}
+              onChange={(e) => setMorningNote(e.target.value)}
+              placeholder="メモ（自由記述）"
+              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-sm text-gray-700 focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
           </div>
 
@@ -166,12 +193,24 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <label className="block text-xs font-bold text-gray-500 mb-1.5">
               🌙 午後にやったこと
             </label>
-            <textarea
-              value={afternoon}
-              onChange={(e) => setAfternoon(e.target.value)}
-              placeholder="例）軽作業、面談、自主学習…"
-              rows={3}
-              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+            <select
+              value={afternoonActivity}
+              onChange={(e) => setAfternoonActivity(e.target.value)}
+              className={`w-full rounded-xl border border-gray-200 p-3 text-sm bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 ${
+                afternoonActivity ? 'text-gray-700' : 'text-gray-300'
+              }`}
+            >
+              <option value="">選んでください</option>
+              {ACTIVITY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={afternoonNote}
+              onChange={(e) => setAfternoonNote(e.target.value)}
+              placeholder="メモ（自由記述）"
+              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-sm text-gray-700 focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
           </div>
 
