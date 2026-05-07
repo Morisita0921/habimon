@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Star, Coins, Sparkles } from 'lucide-react';
+import { Flame, Coins, Sparkles } from 'lucide-react';
 import type { User, CoinTransaction } from '../types';
 import Character from '../components/Character';
 import CheckInButton from '../components/CheckInButton';
