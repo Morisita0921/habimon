@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
@@ -12,10 +12,22 @@ import AdminOpeningSchedule from './AdminOpeningSchedule';
 type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule';
 
 export default function AdminDashboard() {
-  const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, refresh: fetchAllData } = useAdminData();
+  const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirmChecked, setDeleteConfirmChecked] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget || !deleteConfirmChecked) return;
+    setDeleting(true);
+    await deleteUser(deleteTarget.id);
+    setDeleting(false);
+    setDeleteTarget(null);
+    setDeleteConfirmChecked(false);
+  }, [deleteTarget, deleteConfirmChecked, deleteUser]);
 
   const startEditName = useCallback((userId: string, currentName: string) => {
     setEditingNameId(userId);
@@ -322,6 +334,7 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">最終出席日</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">体調傾向</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">権限</th>
+                  <th className="px-4 py-3 text-center text-gray-500 font-medium"></th>
                 </tr>
               </thead>
               <tbody>
@@ -393,6 +406,15 @@ export default function AdminDashboard() {
                         {u.isAdmin ? '管理者' : '利用者'}
                       </button>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setDeleteTarget({ id: u.id, name: u.name })}
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="削除"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -400,6 +422,63 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
       </div>
+      )}
+
+      {/* ===== 削除確認モーダル ===== */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setDeleteTarget(null); setDeleteConfirmChecked(false); }} />
+          <motion.div
+            className="relative bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+              <h3 className="font-heading font-bold text-lg text-gray-800">ユーザーを削除</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                <span className="font-bold text-red-600">{deleteTarget.name}</span> さんを削除しますか？
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                この操作は取り消せません。チェックイン履歴・コイン履歴・日報など全てのデータが削除されます。
+              </p>
+            </div>
+
+            <label className="flex items-center gap-3 bg-red-50 rounded-xl p-3 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deleteConfirmChecked}
+                onChange={(e) => setDeleteConfirmChecked(e.target.checked)}
+                className="w-5 h-5 rounded border-red-300 text-red-500 focus:ring-red-500"
+              />
+              <span className="text-sm text-red-700 font-medium">
+                削除して問題ないことを確認しました
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteConfirmChecked(false); }}
+                className="flex-1 py-3 border-2 border-gray-200 rounded-xl font-heading text-gray-600 min-h-12 hover:bg-gray-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={!deleteConfirmChecked || deleting}
+                className={`flex-1 py-3 rounded-xl font-heading font-bold min-h-12 transition-colors ${
+                  deleteConfirmChecked && !deleting
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {deleting ? '削除中...' : '削除する'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

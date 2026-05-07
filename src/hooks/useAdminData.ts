@@ -199,5 +199,25 @@ export function useAdminData() {
     });
   }, []);
 
-  return { facilityData, loading, updateUser, toggleAdmin, updateUserName, refresh: fetchAllData };
+  // ユーザー削除（auth + 関連データ）
+  const deleteUser = useCallback(async (userId: string) => {
+    // Supabase auth ユーザー削除（カスケードで関連テーブルも削除される場合あり）
+    await supabase.auth.admin.deleteUser(userId);
+    // プロフィール削除（カスケード未設定の場合の保険）
+    await supabase.from('daily_reports').delete().eq('user_id', userId);
+    await supabase.from('coin_transactions').delete().eq('user_id', userId);
+    await supabase.from('exchange_requests').delete().eq('user_id', userId);
+    await supabase.from('check_ins').delete().eq('user_id', userId);
+    await supabase.from('profiles').delete().eq('id', userId);
+
+    setFacilityData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        users: prev.users.filter((u) => u.id !== userId),
+      };
+    });
+  }, []);
+
+  return { facilityData, loading, updateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData };
 }
