@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Coins, Star } from 'lucide-react';
+import { CheckCircle, Coins, Star, CalendarOff } from 'lucide-react';
 import type { User } from '../types';
 import { getTodayString } from '../utils/dateUtils';
+import { useOpeningSchedule } from '../hooks/useOpeningSchedule';
 
 interface DailyReportViewProps {
   user: User;
@@ -13,6 +14,8 @@ interface DailyReportViewProps {
 
 export default function DailyReportView({ user, onSubmit }: DailyReportViewProps) {
   const today = getTodayString();
+  const { isOpenDay, loading: scheduleLoading } = useOpeningSchedule();
+  const isClosedDay = !scheduleLoading && !isOpenDay(today);
   const todayReport = user.dailyReports.find((r) => r.date === today);
   const alreadySubmitted = !!todayReport;
 
@@ -97,8 +100,25 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
         )}
       </AnimatePresence>
 
+      {/* ===== 休所日メッセージ ===== */}
+      {isClosedDay && !alreadySubmitted && (
+        <motion.div
+          className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 mb-6 text-center"
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+        >
+          <CalendarOff size={40} className="text-gray-400 mx-auto mb-2" />
+          <p className="font-heading font-bold text-gray-500 text-base mb-1">
+            今日は休所日です
+          </p>
+          <p className="text-xs text-gray-400">
+            開所日にまた日報を書いてね！
+          </p>
+        </motion.div>
+      )}
+
       {/* ===== 本日の日報入力エリア ===== */}
-      {alreadySubmitted ? (
+      {isClosedDay && !alreadySubmitted ? null : alreadySubmitted ? (
         <motion.div
           className="bg-green-50 border-2 border-green-200 rounded-2xl p-5 mb-6 text-center"
           initial={{ scale: 0.95 }}
