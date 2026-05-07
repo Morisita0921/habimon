@@ -13,8 +13,9 @@ export default function ExpBar({ user }: ExpBarProps) {
   return (
     <div className="w-full max-w-xs mx-auto">
       <div className="flex items-center gap-2">
+        <span className="text-xs text-white/90 font-bold drop-shadow-sm">EXP</span>
         <div
-          className="flex-1 h-3 bg-black/20 rounded-full overflow-hidden border border-white/30"
+          className="flex-1 h-5 bg-black/20 rounded-full overflow-hidden border border-white/30"
           role="progressbar"
           aria-valuenow={percent}
           aria-valuemin={0}
@@ -33,7 +34,7 @@ export default function ExpBar({ user }: ExpBarProps) {
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-[10px] text-white/80 font-bold drop-shadow-sm whitespace-nowrap">
+        <span className="text-sm text-white font-bold drop-shadow-sm whitespace-nowrap">
           {isMaxLevel ? 'MAX' : `${current}/${needed}`}
         </span>
       </div>

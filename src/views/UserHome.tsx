@@ -199,10 +199,10 @@ export default function UserHome({ user, onUpdateUser, onReset, onOpenCharacterS
       <div className="absolute top-16 right-8 w-32 h-12 bg-white/30 rounded-full blur-sm animate-float" style={{ animationDelay: '1s' }} />
       <div className="absolute top-28 left-1/4 w-20 h-8 bg-white/25 rounded-full blur-sm animate-float" style={{ animationDelay: '2s' }} />
 
-      {/* === ヘッダーステータスバー（ソシャゲ風） === */}
+      {/* === ヘッダーステータスバー === */}
       <div className="relative z-10 px-3 pt-2 pb-1">
+        {/* 1段目：レベル・名前 + リセット */}
         <div className="flex items-center justify-between">
-          {/* 左：レベル・名前 */}
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-b from-amber-400 to-amber-600 text-white rounded-lg px-2.5 py-1 text-sm font-bold shadow-md border border-amber-300">
               Lv.{user.level}
@@ -221,38 +221,46 @@ export default function UserHome({ user, onUpdateUser, onReset, onOpenCharacterS
               </button>
             )}
           </div>
-          {/* 右：ステータス + リセット */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-black/20 rounded-full px-3 py-1 backdrop-blur-sm">
-              <Flame size={16} className="text-orange-300" fill="currentColor" />
-              <span className="text-white text-sm font-bold">{user.streak}</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-black/20 rounded-full px-3 py-1 backdrop-blur-sm">
-              <Star size={16} className="text-amber-300" fill="currentColor" />
-              <span className="text-white text-sm font-bold">{user.badges.length}</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/40 to-yellow-500/40 rounded-full px-3 py-1 backdrop-blur-sm border border-yellow-300/30">
-              <Coins size={16} className="text-yellow-200" fill="currentColor" />
-              <span className="text-white text-sm font-bold">{formatCoins(user.akashiCoins)}</span>
-            </div>
-            <button
-              onClick={() => { if (confirm('データをリセットしますか？')) onReset(); }}
-              className="bg-black/20 rounded-full w-7 h-7 flex items-center justify-center backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/30 transition-colors"
-              aria-label="データリセット"
-              title="データリセット"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                <path d="M8 16H3v5" />
-              </svg>
-            </button>
+          <button
+            onClick={() => { if (confirm('データをリセットしますか？')) onReset(); }}
+            className="bg-black/20 rounded-full w-7 h-7 flex items-center justify-center backdrop-blur-sm text-white/70 hover:text-white hover:bg-black/30 transition-colors"
+            aria-label="データリセット"
+            title="データリセット"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M8 16H3v5" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 2段目：EXPバー + コイン */}
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <ExpBar user={user} />
+          <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/50 to-yellow-500/50 rounded-full px-4 py-1.5 backdrop-blur-sm border border-yellow-300/40 shadow-md">
+            <Coins size={22} className="text-yellow-200" fill="currentColor" />
+            <span className="text-white text-lg font-bold drop-shadow-sm">{formatCoins(user.akashiCoins)}</span>
           </div>
         </div>
-        {/* EXPバー（ソシャゲ風・細い） */}
-        <div className="mt-1.5">
-          <ExpBar user={user} />
+
+        {/* 3段目：連続出席日数 */}
+        <div className="mt-2 flex justify-center">
+          <div className="flex items-center gap-1">
+            <Flame size={26} className="text-orange-400 drop-shadow-[0_0_6px_rgba(251,146,60,0.7)]" fill="currentColor" />
+            <span
+              className="text-lg font-heading font-black tracking-wide"
+              style={{
+                background: 'linear-gradient(180deg, #FFF7CC 0%, #FFD700 40%, #FF8C00 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4)) drop-shadow(0 0 8px rgba(255,200,50,0.4))',
+              }}
+            >
+              れんぞく出席 {user.streak}日
+            </span>
+          </div>
         </div>
       </div>
 
