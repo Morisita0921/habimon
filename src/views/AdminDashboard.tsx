@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
@@ -12,8 +12,23 @@ import AdminOpeningSchedule from './AdminOpeningSchedule';
 type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule';
 
 export default function AdminDashboard() {
-  const { facilityData: facility, loading, updateUser: onUpdateUser, refresh: fetchAllData } = useAdminData();
+  const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, refresh: fetchAllData } = useAdminData();
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
+
+  const startEditName = useCallback((userId: string, currentName: string) => {
+    setEditingNameId(userId);
+    setEditingNameValue(currentName);
+  }, []);
+
+  const saveEditName = useCallback(async () => {
+    if (editingNameId && editingNameValue.trim()) {
+      await updateUserName(editingNameId, editingNameValue.trim());
+    }
+    setEditingNameId(null);
+    setEditingNameValue('');
+  }, [editingNameId, editingNameValue, updateUserName]);
 
   const today = new Date();
   const todayStr = getTodayString();
@@ -306,6 +321,7 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">出席率</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">最終出席日</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">体調傾向</th>
+                  <th className="px-4 py-3 text-center text-gray-500 font-medium">権限</th>
                 </tr>
               </thead>
               <tbody>
@@ -313,11 +329,39 @@ export default function AdminDashboard() {
                   <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50/50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {rate < 50 && (
+                        {rate < 50 && !u.isAdmin && (
                           <AlertTriangle size={16} className="text-amber-500 flex-shrink-0" aria-label="出席率が低いです" />
                         )}
-                        <div>
-                          <div className="font-medium text-gray-800">{u.name}</div>
+                        <div className="flex-1 min-w-0">
+                          {editingNameId === u.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={editingNameValue}
+                                onChange={(e) => setEditingNameValue(e.target.value)}
+                                className="px-2 py-1 border border-navy/30 rounded-lg text-sm font-medium text-gray-800 focus:outline-none focus:border-navy w-full"
+                                autoFocus
+                                onKeyDown={(e) => { if (e.key === 'Enter') saveEditName(); if (e.key === 'Escape') setEditingNameId(null); }}
+                              />
+                              <button onClick={saveEditName} className="p-1 text-green-600 hover:bg-green-50 rounded" title="保存">
+                                <Check size={16} />
+                              </button>
+                              <button onClick={() => setEditingNameId(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded" title="キャンセル">
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-gray-800">{u.name}</span>
+                              <button
+                                onClick={() => startEditName(u.id, u.name)}
+                                className="p-0.5 text-gray-300 hover:text-navy rounded transition-colors"
+                                title="名前を編集"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                            </div>
+                          )}
                           <div className="text-xs text-gray-400">{u.characterName}</div>
                         </div>
                       </div>
@@ -335,6 +379,20 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-4 py-3 text-center text-gray-600">{lastCheckIn}</td>
                     <td className="px-4 py-3 text-center text-xl">{getMoodIcon(avgMood)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => toggleAdmin(u.id, !u.isAdmin)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${
+                          u.isAdmin
+                            ? 'bg-navy/10 text-navy hover:bg-navy/20'
+                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                        }`}
+                        title={u.isAdmin ? '管理者権限を解除' : '管理者権限を付与'}
+                      >
+                        <Shield size={14} />
+                        {u.isAdmin ? '管理者' : '利用者'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

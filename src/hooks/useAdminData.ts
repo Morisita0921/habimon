@@ -19,11 +19,10 @@ export function useAdminData() {
   const fetchAllData = useCallback(async () => {
     setLoading(true);
 
-    // 全プロフィール取得
+    // 全プロフィール取得（管理者含む）
     const { data: profiles } = await supabase
       .from('profiles')
       .select('*')
-      .eq('is_admin', false)
       .order('name');
 
     if (!profiles) {
@@ -103,6 +102,7 @@ export function useAdminData() {
         coinHistory,
         exchangeRequests,
         dailyReports: [],
+        isAdmin: profile.is_admin ?? false,
       };
     });
 
@@ -163,5 +163,41 @@ export function useAdminData() {
     });
   }, [facilityData]);
 
-  return { facilityData, loading, updateUser, refresh: fetchAllData };
+  // 管理者権限トグル
+  const toggleAdmin = useCallback(async (userId: string, newIsAdmin: boolean) => {
+    await supabase.from('profiles').update({
+      is_admin: newIsAdmin,
+      updated_at: new Date().toISOString(),
+    }).eq('id', userId);
+
+    setFacilityData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        users: prev.users.map((u) =>
+          u.id === userId ? { ...u, isAdmin: newIsAdmin } : u
+        ),
+      };
+    });
+  }, []);
+
+  // ユーザー名変更
+  const updateUserName = useCallback(async (userId: string, newName: string) => {
+    await supabase.from('profiles').update({
+      name: newName,
+      updated_at: new Date().toISOString(),
+    }).eq('id', userId);
+
+    setFacilityData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        users: prev.users.map((u) =>
+          u.id === userId ? { ...u, name: newName } : u
+        ),
+      };
+    });
+  }, []);
+
+  return { facilityData, loading, updateUser, toggleAdmin, updateUserName, refresh: fetchAllData };
 }

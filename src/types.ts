@@ -26,6 +26,8 @@ export interface User {
   exchangeRequests: ExchangeRequest[];
   // 日報
   dailyReports: DailyReport[];
+  // 管理者フラグ
+  isAdmin?: boolean;
 }
 
 // 物品交換カタログのアイテム
