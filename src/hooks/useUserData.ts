@@ -238,8 +238,10 @@ export function useUserData() {
   const sendToGoogleSheet = async (params: {
     userName: string;
     date: string;
-    morning: string;
-    afternoon: string;
+    morningActivity: string;
+    morningNote: string;
+    afternoonActivity: string;
+    afternoonNote: string;
     submittedAt: string;
   }) => {
     const GAS_URL = import.meta.env.VITE_GAS_WEBHOOK_URL;
@@ -343,12 +345,20 @@ export function useUserData() {
       ],
     } : null);
 
-    // Googleスプシに送信
+    // Googleスプシに送信（プルダウンとメモを分離）
+    const parseParts = (text: string) => {
+      const match = text.match(/^(.+?)（(.+)）$/);
+      return match ? { activity: match[1], note: match[2] } : { activity: text, note: '' };
+    };
+    const mParts = parseParts(morning.trim());
+    const aParts = parseParts(afternoon.trim());
     await sendToGoogleSheet({
       userName: userData.name,
       date: today,
-      morning: morning.trim(),
-      afternoon: afternoon.trim(),
+      morningActivity: mParts.activity,
+      morningNote: mParts.note,
+      afternoonActivity: aParts.activity,
+      afternoonNote: aParts.note,
       submittedAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
     });
 
