@@ -12,6 +12,7 @@ import { getTodayString } from '../utils/dateUtils';
 import { calculateCheckInExp, calculateNewLevel, EXP_VALUES } from '../utils/expCalculator';
 import { calculateCheckInCoins, formatCoins } from '../utils/coinCalculator';
 import { getCharacterById, getCharacterFormForLevel, isEvolutionLevel } from '../data/characters';
+import { useOpeningSchedule } from '../hooks/useOpeningSchedule';
 
 interface UserHomeProps {
   user: User;
@@ -34,11 +35,15 @@ export default function UserHome({ user, onUpdateUser, onReset, onOpenCharacterS
   }>({ show: false, fromUrl: '', toUrl: '' });
 
   const selectedCharacter = getCharacterById(user.selectedCharacterId);
+  const { isOpenDay } = useOpeningSchedule();
 
   const today = getTodayString();
   const alreadyCheckedIn = user.checkInHistory.some(
     (r) => r.date === today && r.checkedIn
   );
+  const currentHour = new Date().getHours();
+  const canCheckInByTime = currentHour >= 9;
+  const isClosedDay = !isOpenDay(today);
 
   const handleCheckIn = useCallback((mood: 1 | 2 | 3 | 4 | 5) => {
     const expGain = calculateCheckInExp(user.streak) + EXP_VALUES.moodRecord;
@@ -280,6 +285,8 @@ export default function UserHome({ user, onUpdateUser, onReset, onOpenCharacterS
         <div className="flex justify-center mt-2 z-10">
           <CheckInButton
             alreadyCheckedIn={alreadyCheckedIn}
+            canCheckInByTime={canCheckInByTime}
+            isClosedDay={isClosedDay}
             currentStreak={user.streak}
             onCheckIn={handleCheckIn}
           />

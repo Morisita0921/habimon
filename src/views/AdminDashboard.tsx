@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
 import AdminCoinGrant from './AdminCoinGrant';
 import AdminExchangeRequests from './AdminExchangeRequests';
 import AdminUserCreate from './AdminUserCreate';
+import AdminOpeningSchedule from './AdminOpeningSchedule';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule';
 
 export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, refresh: fetchAllData } = useAdminData();
@@ -169,6 +170,17 @@ export default function AdminDashboard() {
             <UserPlus size={18} />
             メンバー追加
           </button>
+          <button
+            onClick={() => setActiveTab('opening-schedule')}
+            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+              activeTab === 'opening-schedule'
+                ? 'text-teal-600 border-teal-500'
+                : 'text-gray-400 border-transparent hover:text-gray-600'
+            }`}
+          >
+            <CalendarDays size={18} />
+            開所日管理
+          </button>
         </div>
       </div>
 
@@ -185,6 +197,13 @@ export default function AdminDashboard() {
       {/* メンバー追加タブ */}
       {activeTab === 'user-create' && (
         <AdminUserCreate onCreated={fetchAllData} />
+      )}
+
+      {/* 開所日管理タブ */}
+      {activeTab === 'opening-schedule' && (
+        <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
+          <AdminOpeningSchedule />
+        </div>
       )}
 
       {/* ダッシュボードタブ */}

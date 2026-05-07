@@ -42,6 +42,28 @@ export function isSameDay(a: string, b: string): boolean {
   return a === b;
 }
 
+export type OpeningOverride = 'open' | 'closed';
+
+export function isOpenDay(dateStr: string, specialDates: Record<string, OpeningOverride>): boolean {
+  if (specialDates[dateStr] === 'open') return true;
+  if (specialDates[dateStr] === 'closed') return false;
+  return isWeekday(parseDate(dateStr));
+}
+
+export function getOpenDaysInMonth(
+  year: number,
+  month: number,
+  specialDates: Record<string, OpeningOverride>
+): number {
+  const days = getDaysInMonth(year, month);
+  let count = 0;
+  for (let d = 1; d <= days; d++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (isOpenDay(dateStr, specialDates)) count++;
+  }
+  return count;
+}
+
 export function getMonthLabel(year: number, month: number): string {
   return `${year}年${month}月`;
 }

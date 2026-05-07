@@ -5,6 +5,8 @@ import { calculateCheckInCoins, formatCoins } from '../utils/coinCalculator';
 
 interface CheckInButtonProps {
   alreadyCheckedIn: boolean;
+  canCheckInByTime: boolean;
+  isClosedDay: boolean;
   currentStreak: number;
   onCheckIn: (mood: 1 | 2 | 3 | 4 | 5) => void;
 }
@@ -79,14 +81,16 @@ const MOOD_OPTIONS: { value: 1 | 2 | 3 | 4 | 5; label: string; color: string; bg
   },
 ];
 
-export default function CheckInButton({ alreadyCheckedIn, currentStreak, onCheckIn }: CheckInButtonProps) {
+export default function CheckInButton({ alreadyCheckedIn, canCheckInByTime, isClosedDay, currentStreak, onCheckIn }: CheckInButtonProps) {
   const [showMoodPicker, setShowMoodPicker] = useState(false);
   const [expGained, setExpGained] = useState<number | null>(null);
   const [coinsGained, setCoinsGained] = useState<number | null>(null);
   const [coinBonusDays, setCoinBonusDays] = useState<number | null>(null);
 
+  const isDisabled = alreadyCheckedIn || !canCheckInByTime || isClosedDay;
+
   const handleCheckInClick = () => {
-    if (alreadyCheckedIn) return;
+    if (isDisabled) return;
     setShowMoodPicker(true);
   };
 
@@ -395,24 +399,46 @@ export default function CheckInButton({ alreadyCheckedIn, currentStreak, onCheck
         )}
       </AnimatePresence>
 
+      {/* 休所日メッセージ */}
+      {!alreadyCheckedIn && isClosedDay && (
+        <motion.p
+          className="text-center text-sm text-gray-400 mb-2 font-heading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          🏠 きょうは おやすみです
+        </motion.p>
+      )}
+
+      {/* 9時前のメッセージ */}
+      {!alreadyCheckedIn && !isClosedDay && !canCheckInByTime && (
+        <motion.p
+          className="text-center text-sm text-gray-400 mb-2 font-heading"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          🕘 ごぜん 9じ から チェックインできます
+        </motion.p>
+      )}
+
       {/* チェックインボタン（ソシャゲ風の装飾ボタン） */}
       <motion.button
         className={`
           relative px-10 py-4 rounded-2xl font-heading font-bold text-lg
           shadow-lg transition-all min-h-14
-          ${alreadyCheckedIn
+          ${isDisabled
             ? 'bg-gray-300/80 text-gray-500 cursor-not-allowed border-2 border-gray-400/50'
             : 'bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 text-white border-2 border-orange-300 hover:shadow-xl active:shadow-md'
           }
         `}
         onClick={handleCheckInClick}
-        disabled={alreadyCheckedIn}
-        whileTap={!alreadyCheckedIn ? { scale: 0.95 } : undefined}
-        whileHover={!alreadyCheckedIn ? { scale: 1.05 } : undefined}
-        aria-label={alreadyCheckedIn ? '本日チェックイン済み' : 'チェックイン'}
+        disabled={isDisabled}
+        whileTap={!isDisabled ? { scale: 0.95 } : undefined}
+        whileHover={!isDisabled ? { scale: 1.05 } : undefined}
+        aria-label={alreadyCheckedIn ? '本日チェックイン済み' : isClosedDay ? '本日は休所日です' : !canCheckInByTime ? '9時からチェックインできます' : 'チェックイン'}
       >
         {/* ボタン内のハイライト */}
-        {!alreadyCheckedIn && (
+        {!isDisabled && (
           <div className="absolute inset-x-2 top-1 h-1/3 bg-white/20 rounded-t-xl pointer-events-none" />
         )}
         {alreadyCheckedIn ? (
@@ -421,6 +447,16 @@ export default function CheckInButton({ alreadyCheckedIn, currentStreak, onCheck
               <Check size={16} className="text-white" strokeWidth={3} />
             </div>
             <span>チェックインずみ</span>
+          </div>
+        ) : isClosedDay ? (
+          <div className="flex items-center gap-2.5">
+            <span>🏠</span>
+            <span>きょうは おやすみ</span>
+          </div>
+        ) : !canCheckInByTime ? (
+          <div className="flex items-center gap-2.5">
+            <span>🕘</span>
+            <span>9じから チェックイン</span>
           </div>
         ) : (
           <div className="flex items-center gap-2.5">

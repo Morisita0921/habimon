@@ -38,7 +38,16 @@ export default function AdminUserCreate({ onCreated }: Props) {
     });
 
     if (authError || !data.user) {
-      setError(authError?.message ?? 'ユーザーの作成に失敗しました');
+      const msg = authError?.message ?? '';
+      if (msg.includes('already been registered') || msg.includes('already exists')) {
+        setError('このメールアドレスは既に登録されています');
+      } else if (msg.includes('invalid') && msg.includes('email')) {
+        setError('メールアドレスの形式が正しくありません');
+      } else if (msg.includes('password')) {
+        setError('パスワードは6文字以上にしてください');
+      } else {
+        setError('アカウントの作成に失敗しました: ' + msg);
+      }
       setLoading(false);
       return;
     }

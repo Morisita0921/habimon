@@ -234,6 +234,28 @@ export function useUserData() {
     } : null);
   }, [authUser]);
 
+  // 日報をGoogleスプレッドシートに送信
+  const sendToGoogleSheet = async (params: {
+    userName: string;
+    date: string;
+    morning: string;
+    afternoon: string;
+    submittedAt: string;
+  }) => {
+    const GAS_URL = import.meta.env.VITE_GAS_WEBHOOK_URL;
+    if (!GAS_URL) return;
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+    } catch {
+      // スプシ送信失敗はサイレントに無視（アプリの動作には影響させない）
+    }
+  };
+
   // 日報提出
   const submitDailyReport = useCallback(async (morning: string, afternoon: string) => {
     if (!authUser || !userData) return;
@@ -320,6 +342,15 @@ export function useUserData() {
         { id: txId, date: today, type: 'earn', amount: coinGain, reason: coinReason },
       ],
     } : null);
+
+    // Googleスプシに送信
+    await sendToGoogleSheet({
+      userName: userData.name,
+      date: today,
+      morning: morning.trim(),
+      afternoon: afternoon.trim(),
+      submittedAt: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+    });
 
     return { expGain, coinGain, newBadges: newBadges.filter((b) => !userData.badges.includes(b)) };
   }, [authUser, userData, refreshProfile]);
