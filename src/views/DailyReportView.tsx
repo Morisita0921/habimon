@@ -179,12 +179,12 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            <input
-              type="text"
+            <textarea
               value={morningNote}
               onChange={(e) => setMorningNote(e.target.value)}
-              placeholder="メモ（自由記述）"
-              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-sm text-gray-700 focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+              placeholder="くわしく書いてね"
+              rows={3}
+              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
           </div>
 
@@ -205,12 +205,12 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            <input
-              type="text"
+            <textarea
               value={afternoonNote}
               onChange={(e) => setAfternoonNote(e.target.value)}
-              placeholder="メモ（自由記述）"
-              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-sm text-gray-700 focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+              placeholder="くわしく書いてね"
+              rows={3}
+              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
           </div>
 

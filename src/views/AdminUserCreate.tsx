@@ -12,6 +12,7 @@ export default function AdminUserCreate({ onCreated }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [characterName, setCharacterName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,7 +66,7 @@ export default function AdminUserCreate({ onCreated }: Props) {
       akashi_coins: 0,
       owned_cosmetics: [],
       equipped_cosmetics: [],
-      is_admin: false,
+      is_admin: isAdmin,
       facility_name: 'メタゲーム明石',
     });
 
@@ -80,6 +81,7 @@ export default function AdminUserCreate({ onCreated }: Props) {
     setEmail('');
     setPassword('');
     setCharacterName('');
+    setIsAdmin(false);
     setLoading(false);
     onCreated();
   };
@@ -177,6 +179,31 @@ export default function AdminUserCreate({ onCreated }: Props) {
                 placeholder={name ? `${name}のもん` : 'はびちゃん'}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-navy focus:outline-none text-sm min-h-12 transition-colors"
               />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div
+                  className={`relative w-12 h-7 rounded-full transition-colors ${
+                    isAdmin ? 'bg-navy' : 'bg-gray-300'
+                  }`}
+                  onClick={() => { setIsAdmin(!isAdmin); setSuccessName(''); }}
+                >
+                  <div
+                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                      isAdmin ? 'translate-x-5' : ''
+                    }`}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-600">
+                  管理者権限を付与する
+                </span>
+              </label>
+              {isAdmin && (
+                <p className="text-xs text-amber-600 mt-1.5 ml-15">
+                  管理者はダッシュボード・コイン付与・開所日管理などにアクセスできます
+                </p>
+              )}
             </div>
 
             {error && (
