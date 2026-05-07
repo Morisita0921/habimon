@@ -53,7 +53,7 @@ export default function AdminUserCreate({ onCreated }: Props) {
       return;
     }
 
-    const { error: profileError } = await supabaseAdmin.from('profiles').insert({
+    const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: data.user.id,
       name,
       character_name: characterName || `${name}のもん`,
