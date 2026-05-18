@@ -46,8 +46,10 @@ export default function ShopView({ user, onUpdateUser: _onUpdateUser, onAddExcha
     return [...user.exchangeRequests].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
   }, [user.exchangeRequests]);
 
+  const [requesting, setRequesting] = useState(false);
+
   const handleRequest = async () => {
-    if (!selectedItem) return;
+    if (!selectedItem || requesting) return;
 
     const now = new Date();
     const dateStr = `${getTodayString()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -62,11 +64,20 @@ export default function ShopView({ user, onUpdateUser: _onUpdateUser, onAddExcha
       requestedAt: dateStr,
     };
 
-    // コインは受取時に消費するので、ここでは減らさない
-    setSelectedItem(null);
-    await onAddExchangeRequest(newRequest);
-    setSuccessInfo(`${selectedItem.name}を もうしこみました！`);
-    setTimeout(() => setSuccessInfo(null), 2500);
+    setRequesting(true);
+    const itemName = selectedItem.name;
+    try {
+      await onAddExchangeRequest(newRequest);
+      setSelectedItem(null);
+      setSuccessInfo(`${itemName}を もうしこみました！`);
+      setTimeout(() => setSuccessInfo(null), 2500);
+    } catch (e) {
+      console.error('もうしこみエラー:', e);
+      setSuccessInfo('もうしこみに しっぱいしました...');
+      setTimeout(() => setSuccessInfo(null), 2500);
+    } finally {
+      setRequesting(false);
+    }
   };
 
   // 残高チェック
@@ -291,15 +302,18 @@ export default function ShopView({ user, onUpdateUser: _onUpdateUser, onAddExcha
                 </button>
                 <button
                   onClick={handleRequest}
-                  disabled={!hasEnoughCoins(selectedItem.price)}
+                  disabled={!hasEnoughCoins(selectedItem.price) || requesting}
                   className={`flex-1 py-3 rounded-xl font-heading font-bold shadow-md transition-all ${
-                    hasEnoughCoins(selectedItem.price)
+                    hasEnoughCoins(selectedItem.price) && !requesting
                       ? 'bg-gradient-to-b from-amber-400 to-amber-600 text-white'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  <Check size={16} className="inline mr-1" />
-                  もうしこむ
+                  {requesting
+                    ? <span className="inline-block animate-spin mr-1">⏳</span>
+                    : <Check size={16} className="inline mr-1" />
+                  }
+                  {requesting ? 'そうしん中...' : 'もうしこむ'}
                 </button>
               </div>
             </motion.div>
