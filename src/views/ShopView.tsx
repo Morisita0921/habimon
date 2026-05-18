@@ -55,7 +55,7 @@ export default function ShopView({ user, onUpdateUser: _onUpdateUser, onAddExcha
     const dateStr = `${getTodayString()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
     const newRequest: ExchangeRequest = {
-      id: `req-${Date.now()}`,
+      id: crypto.randomUUID(),
       itemId: selectedItem.id,
       itemName: selectedItem.name,
       itemEmoji: selectedItem.emoji,
