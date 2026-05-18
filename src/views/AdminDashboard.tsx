@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2 } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
@@ -8,8 +8,9 @@ import AdminCoinGrant from './AdminCoinGrant';
 import AdminExchangeRequests from './AdminExchangeRequests';
 import AdminUserCreate from './AdminUserCreate';
 import AdminOpeningSchedule from './AdminOpeningSchedule';
+import AdminShopItems from './AdminShopItems';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items';
 
 export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
@@ -208,6 +209,17 @@ export default function AdminDashboard() {
             <CalendarDays size={18} />
             開所日管理
           </button>
+          <button
+            onClick={() => setActiveTab('shop-items')}
+            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+              activeTab === 'shop-items'
+                ? 'text-amber-600 border-amber-500'
+                : 'text-gray-400 border-transparent hover:text-gray-600'
+            }`}
+          >
+            <ShoppingBag size={18} />
+            ショップ管理
+          </button>
         </div>
       </div>
 
@@ -230,6 +242,13 @@ export default function AdminDashboard() {
       {activeTab === 'opening-schedule' && (
         <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
           <AdminOpeningSchedule />
+        </div>
+      )}
+
+      {/* ショップ管理タブ */}
+      {activeTab === 'shop-items' && (
+        <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
+          <AdminShopItems />
         </div>
       )}
 
