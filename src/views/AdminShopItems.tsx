@@ -15,7 +15,6 @@ const EMPTY_FORM = {
   category: 'snack' as ExchangeItemCategory,
   price: 300,
   emoji: '🎁',
-  available: true,
 };
 
 type EditState = {
@@ -41,7 +40,7 @@ export default function AdminShopItems() {
     setSaving(true);
     setError(null);
     try {
-      await addItem({ ...form, name: form.name.trim(), description: form.description.trim() });
+      await addItem({ ...form, name: form.name.trim(), description: form.description.trim(), available: true });
       setForm({ ...EMPTY_FORM });
       setShowAddForm(false);
     } catch (e) {
@@ -248,7 +247,6 @@ type FormValue = {
   category: ExchangeItemCategory;
   price: number;
   emoji: string;
-  available?: boolean;
 };
 
 function ItemForm({

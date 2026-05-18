@@ -21,7 +21,7 @@ interface UserHomeProps {
   onOpenCharacterSelect?: () => void;
 }
 
-export default function UserHome({ user, onUpdateUser, onReset, onOpenCharacterSelect }: UserHomeProps) {
+export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpenCharacterSelect }: UserHomeProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<{ show: boolean; level: number; formLabel?: string }>({ show: false, level: 0 });
   const [evolutionInfo, setEvolutionInfo] = useState<{
