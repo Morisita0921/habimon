@@ -197,6 +197,24 @@ export function useUserData() {
       }
     }
 
+    // exchangeRequests に新しいエントリがあれば exchange_requests テーブルに保存
+    if (updates.exchangeRequests) {
+      const existingIds = new Set(userData?.exchangeRequests.map((r) => r.id) ?? []);
+      const newReqs = updates.exchangeRequests.filter((r) => !existingIds.has(r.id));
+      for (const req of newReqs) {
+        await supabase.from('exchange_requests').insert({
+          id: req.id,
+          user_id: authUser.id,
+          item_id: req.itemId,
+          item_name: req.itemName,
+          item_emoji: req.itemEmoji,
+          cost: req.price,
+          status: req.status,
+          requested_at: req.requestedAt,
+        });
+      }
+    }
+
     const dbUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (updates.level !== undefined) dbUpdates.level = updates.level;
     if (updates.exp !== undefined) dbUpdates.exp = updates.exp;
