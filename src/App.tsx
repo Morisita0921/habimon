@@ -57,7 +57,7 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 // ===== 認証済みメイン画面 =====
 function MainApp() {
   const { profile, signOut } = useAuth();
-  const { userData, loading, updateUser, submitDailyReport } = useUserData();
+  const { userData, loading, updateUser, addExchangeRequest, submitDailyReport } = useUserData();
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -150,7 +150,11 @@ function MainApp() {
         {currentView === 'calendar' && <CalendarView user={userData} />}
         {currentView === 'achievement' && <AchievementView user={userData} />}
         {currentView === 'shop' && (
-          <ShopView user={userData} onUpdateUser={(u) => updateUser(u)} />
+          <ShopView
+            user={userData}
+            onUpdateUser={(u) => updateUser(u)}
+            onAddExchangeRequest={addExchangeRequest}
+          />
         )}
         {currentView === 'report' && (
           <DailyReportView user={userData} onSubmit={submitDailyReport} />

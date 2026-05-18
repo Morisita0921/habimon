@@ -236,7 +236,7 @@ export function useUserData() {
   // 交換申請
   const addExchangeRequest = useCallback(async (req: ExchangeRequest) => {
     if (!authUser) return;
-    await supabase.from('exchange_requests').insert({
+    const { error } = await supabase.from('exchange_requests').insert({
       id: req.id,
       user_id: authUser.id,
       item_id: req.itemId,
@@ -246,6 +246,11 @@ export function useUserData() {
       status: req.status,
       requested_at: req.requestedAt,
     });
+    if (error) {
+      console.error('交換申請の保存に失敗:', error.message);
+      throw new Error(error.message);
+    }
+    // DBへの保存が成功してからローカル状態を更新（refreshProfile不要）
     setUserData((prev) => prev ? {
       ...prev,
       exchangeRequests: [...prev.exchangeRequests, req],

@@ -10,6 +10,7 @@ import { getTodayString } from '../utils/dateUtils';
 interface ShopViewProps {
   user: User;
   onUpdateUser: (user: User) => void;
+  onAddExchangeRequest: (req: ExchangeRequest) => Promise<void>;
 }
 
 type ShopTab = 'catalog' | 'my-requests';
@@ -21,7 +22,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string; icon: string
   rejected: { label: 'きゃっか', color: 'bg-gray-200 text-gray-600 border-gray-300', icon: '❌' },
 };
 
-export default function ShopView({ user, onUpdateUser }: ShopViewProps) {
+export default function ShopView({ user, onUpdateUser: _onUpdateUser, onAddExchangeRequest }: ShopViewProps) {
   const { items: allItems, loading: itemsLoading } = useExchangeItems();
   const [activeTab, setActiveTab] = useState<ShopTab>('catalog');
   const [activeCategory, setActiveCategory] = useState<ExchangeItemCategory | 'all'>('all');
@@ -45,7 +46,7 @@ export default function ShopView({ user, onUpdateUser }: ShopViewProps) {
     return [...user.exchangeRequests].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
   }, [user.exchangeRequests]);
 
-  const handleRequest = () => {
+  const handleRequest = async () => {
     if (!selectedItem) return;
 
     const now = new Date();
@@ -62,12 +63,8 @@ export default function ShopView({ user, onUpdateUser }: ShopViewProps) {
     };
 
     // コインは受取時に消費するので、ここでは減らさない
-    const updated: User = {
-      ...user,
-      exchangeRequests: [...user.exchangeRequests, newRequest],
-    };
-    onUpdateUser(updated);
     setSelectedItem(null);
+    await onAddExchangeRequest(newRequest);
     setSuccessInfo(`${selectedItem.name}を もうしこみました！`);
     setTimeout(() => setSuccessInfo(null), 2500);
   };
