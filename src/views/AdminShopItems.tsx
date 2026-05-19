@@ -1,18 +1,11 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
 import { useExchangeItems } from '../hooks/useExchangeItems';
-import type { ExchangeItem, ExchangeItemCategory } from '../types';
-
-const CATEGORY_LABELS: Record<ExchangeItemCategory, string> = {
-  snack: 'お菓子',
-  drink: '飲み物',
-  daily: '日用品',
-};
+import type { ExchangeItem } from '../types';
 
 const EMPTY_FORM = {
   name: '',
   description: '',
-  category: 'snack' as ExchangeItemCategory,
   price: 300,
   emoji: '🎁',
 };
@@ -21,7 +14,6 @@ type EditState = {
   id: string;
   name: string;
   description: string;
-  category: ExchangeItemCategory;
   price: number;
   emoji: string;
 };
@@ -54,7 +46,6 @@ export default function AdminShopItems() {
       id: item.id,
       name: item.name,
       description: item.description,
-      category: item.category,
       price: item.price,
       emoji: item.emoji,
     });
@@ -68,7 +59,6 @@ export default function AdminShopItems() {
       await updateItem(editState.id, {
         name: editState.name.trim(),
         description: editState.description.trim(),
-        category: editState.category,
         price: editState.price,
         emoji: editState.emoji,
       });
@@ -168,9 +158,6 @@ export default function AdminShopItems() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-gray-800">{item.name}</span>
-                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">
-                      {CATEGORY_LABELS[item.category]}
-                    </span>
                   </div>
                   <div className="text-xs text-gray-400 truncate">{item.description}</div>
                   <div className="text-sm font-bold text-amber-700 mt-0.5">🪙 {item.price.toLocaleString()} コイン</div>
@@ -244,7 +231,6 @@ export default function AdminShopItems() {
 type FormValue = {
   name: string;
   description: string;
-  category: ExchangeItemCategory;
   price: number;
   emoji: string;
 };
@@ -298,29 +284,15 @@ function ItemForm({
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-amber-400"
         />
       </div>
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <label className="block text-xs text-gray-500 mb-1">カテゴリ</label>
-          <select
-            value={value.category}
-            onChange={(e) => set({ category: e.target.value as ExchangeItemCategory })}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-amber-400 bg-white"
-          >
-            <option value="snack">お菓子</option>
-            <option value="drink">飲み物</option>
-            <option value="daily">日用品</option>
-          </select>
-        </div>
-        <div className="w-32">
-          <label className="block text-xs text-gray-500 mb-1">価格（コイン）</label>
-          <input
-            type="number"
-            value={value.price}
-            onChange={(e) => set({ price: Math.max(1, parseInt(e.target.value) || 0) })}
-            min={1}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-amber-400"
-          />
-        </div>
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">価格（コイン）</label>
+        <input
+          type="number"
+          value={value.price}
+          onChange={(e) => set({ price: Math.max(1, parseInt(e.target.value) || 0) })}
+          min={1}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-amber-400"
+        />
       </div>
       <div className="flex gap-2 pt-1">
         <button
