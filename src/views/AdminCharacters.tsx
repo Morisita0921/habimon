@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, Loader2, ImageOff } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, Loader2, ImageOff, Upload } from 'lucide-react';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { useCharacters } from '../hooks/useCharacters';
 import type { CharacterRecord } from '../hooks/useCharacters';
+
+const BUCKET = 'characters';
 
 interface FormValue {
   name: string;
@@ -34,6 +37,77 @@ function ImagePreview({ url, label }: { url: string; label: string }) {
   );
 }
 
+// 画像URL入力 + アップロードボタン一体型フィールド
+function ImageUploadField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  placeholder?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png';
+    const filename = `char_${Date.now()}.${ext}`;
+    setUploading(true);
+    const { error } = await supabase.storage.from(BUCKET).upload(filename, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (error) {
+      alert(`アップロード失敗: ${error.message}`);
+    } else {
+      const url = supabase.storage.from(BUCKET).getPublicUrl(filename).data.publicUrl;
+      onChange(url);
+    }
+    setUploading(false);
+    e.target.value = '';
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-bold text-gray-600 mb-1">{label}</label>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-navy font-mono"
+          placeholder={placeholder}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleUpload}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="px-3 py-2 bg-navy/10 text-navy rounded-lg hover:bg-navy/20 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-bold shrink-0"
+          title="画像をアップロード"
+        >
+          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          {uploading ? '中...' : 'UP'}
+        </button>
+      </div>
+      <div className="mt-1">
+        <ImagePreview url={value} label={label} />
+      </div>
+    </div>
+  );
+}
+
 interface CharacterFormProps {
   initial: FormValue;
   onSubmit: (v: FormValue) => Promise<void>;
@@ -50,8 +124,8 @@ function CharacterForm({ initial, onSubmit, onCancel, submitLabel }: CharacterFo
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { setError('なまえは ひっすです'); return; }
-    if (!form.form1ImageUrl.trim()) { setError('だいいちけいたいの がぞうURLは ひっすです'); return; }
-    if (!form.form2ImageUrl.trim()) { setError('だいにけいたいの がぞうURLは ひっすです'); return; }
+    if (!form.form1ImageUrl.trim()) { setError('だいいちけいたいの がぞうは ひっすです'); return; }
+    if (!form.form2ImageUrl.trim()) { setError('だいにけいたいの がぞうは ひっすです'); return; }
     setSaving(true);
     try {
       await onSubmit(form);
@@ -84,32 +158,18 @@ function CharacterForm({ initial, onSubmit, onCancel, submitLabel }: CharacterFo
           placeholder="例: みんなのパートナー"
         />
       </div>
-      <div>
-        <label className="block text-xs font-bold text-gray-600 mb-1">だいいちけいたい がぞうURL (Lv1-2) *</label>
-        <input
-          type="text"
-          value={form.form1ImageUrl}
-          onChange={(e) => set('form1ImageUrl', e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-navy font-mono"
-          placeholder="/characters/example/first.png"
-        />
-        <div className="mt-1">
-          <ImagePreview url={form.form1ImageUrl} label="第一形態" />
-        </div>
-      </div>
-      <div>
-        <label className="block text-xs font-bold text-gray-600 mb-1">だいにけいたい がぞうURL (Lv3-5) *</label>
-        <input
-          type="text"
-          value={form.form2ImageUrl}
-          onChange={(e) => set('form2ImageUrl', e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-navy font-mono"
-          placeholder="/characters/example/second.png"
-        />
-        <div className="mt-1">
-          <ImagePreview url={form.form2ImageUrl} label="第二形態" />
-        </div>
-      </div>
+      <ImageUploadField
+        label="だいいちけいたい がぞう (Lv1-2) *"
+        value={form.form1ImageUrl}
+        onChange={(v) => set('form1ImageUrl', v)}
+        placeholder="/characters/example/first.png"
+      />
+      <ImageUploadField
+        label="だいにけいたい がぞう (Lv3-5) *"
+        value={form.form2ImageUrl}
+        onChange={(v) => set('form2ImageUrl', v)}
+        placeholder="/characters/example/second.png"
+      />
 
       {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
 
@@ -245,10 +305,8 @@ export default function AdminCharacters() {
               </div>
             ) : (
               <div className="p-3 flex items-center gap-3">
-                {/* サムネイル */}
                 <ImagePreview url={char.thumbnail || char.form1ImageUrl} label={char.name} />
 
-                {/* キャラ情報 */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-heading font-bold text-sm text-gray-800">{char.name}</span>
@@ -268,7 +326,6 @@ export default function AdminCharacters() {
                   </div>
                 </div>
 
-                {/* アクション */}
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
                     onClick={() => toggleAvailable(char.id, !char.available)}
