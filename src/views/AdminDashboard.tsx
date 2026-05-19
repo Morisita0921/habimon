@@ -149,10 +149,10 @@ export default function AdminDashboard() {
         </div>
 
         {/* タブナビゲーション */}
-        <div className="flex gap-1 border-b border-gray-200 mb-6">
+        <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'dashboard'
                 ? 'text-navy border-navy'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('coin-grant')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'coin-grant'
                 ? 'text-amber-600 border-amber-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('exchange')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'exchange'
                 ? 'text-green-600 border-green-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('daily-reports')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'daily-reports'
                 ? 'text-teal-600 border-teal-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('user-create')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'user-create'
                 ? 'text-navy border-navy'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('opening-schedule')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'opening-schedule'
                 ? 'text-teal-600 border-teal-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('shop-items')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'shop-items'
                 ? 'text-amber-600 border-amber-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('passcode')}
-            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'passcode'
                 ? 'text-teal-600 border-teal-500'
                 : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
             <>
               <button
                 onClick={() => setActiveTab('characters')}
-                className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+                className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
                   activeTab === 'characters'
                     ? 'text-purple-600 border-purple-500'
                     : 'text-gray-400 border-transparent hover:text-gray-600'
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => setActiveTab('background')}
-                className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+                className={`flex items-center gap-2 px-4 py-3 shrink-0 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
                   activeTab === 'background'
                     ? 'text-purple-600 border-purple-500'
                     : 'text-gray-400 border-transparent hover:text-gray-600'
