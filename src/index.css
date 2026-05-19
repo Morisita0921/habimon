@@ -31,9 +31,16 @@ html {
 
 body {
   font-family: var(--font-family-body);
-  background-color: var(--color-cream);
+  background-color: #b0bec5;
   color: #333;
   -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 h1, h2, h3, h4, h5, h6 {

@@ -65,7 +65,7 @@ function MainApp() {
   if (loading || !userData) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="w-full max-w-lg min-h-screen flex items-center justify-center shadow-2xl"
         style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #E8F8FF 100%)' }}
       >
         <div className="text-center">
@@ -96,7 +96,7 @@ function MainApp() {
   // 管理者ビュー
   if (profile?.is_admin && currentView === 'admin') {
     return (
-      <div>
+      <div className="w-full min-h-screen bg-admin-bg shadow-2xl">
         <AdminDashboard />
         <div className="fixed bottom-4 right-4 flex gap-2">
           <button
@@ -122,7 +122,7 @@ function MainApp() {
   }
 
   return (
-    <div className="max-w-lg mx-auto min-h-screen flex flex-col">
+    <div className="w-full max-w-lg min-h-screen flex flex-col shadow-2xl overflow-hidden">
       {/* ヘッダー（ホーム以外） */}
       {currentView !== 'home' && (
         <header className="bg-white/80 backdrop-blur-sm border-b border-main-light/20 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
@@ -162,8 +162,8 @@ function MainApp() {
       </main>
 
       {/* ボトムナビ */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-40">
-        <div className="max-w-lg mx-auto flex">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/95 backdrop-blur-sm border-t border-gray-200 z-40">
+        <div className="flex">
           {([
             { view: 'home' as ViewType, icon: Home, label: 'ホーム' },
             { view: 'calendar' as ViewType, icon: CalendarDays, label: 'カレンダー' },
