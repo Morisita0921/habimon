@@ -233,6 +233,46 @@ export function useUserData() {
     setUserData((prev) => prev ? { ...prev, ...updates } : null);
   }, [authUser, userData, refreshProfile]);
 
+  // ショップ関連データをDBから再取得（管理者が申請を処理した後の同期用）
+  const refreshFromDB = useCallback(async () => {
+    if (!authUser) return;
+
+    const [profileRes, exchangeRes, coinRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+      supabase.from('exchange_requests').select('*').eq('user_id', authUser.id).order('created_at', { ascending: true }),
+      supabase.from('coin_transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: true }),
+    ]);
+
+    if (!profileRes.data) return;
+
+    const exchangeRequests: ExchangeRequest[] = (exchangeRes.data ?? []).map((r) => ({
+      id: r.id,
+      itemId: r.item_id ?? '',
+      itemName: r.item_name,
+      itemEmoji: r.item_emoji ?? '🎁',
+      price: r.cost,
+      status: r.status,
+      requestedAt: r.requested_at,
+      processedAt: r.processed_at,
+      note: r.note,
+    }));
+
+    const coinHistory: CoinTransaction[] = (coinRes.data ?? []).map((r) => ({
+      id: r.id,
+      date: r.date,
+      type: r.type as 'earn' | 'spend',
+      amount: r.amount,
+      reason: r.reason,
+    }));
+
+    setUserData((prev) => prev ? {
+      ...prev,
+      akashiCoins: profileRes.data.akashi_coins,
+      exchangeRequests,
+      coinHistory,
+    } : null);
+  }, [authUser]);
+
   // 交換申請
   const addExchangeRequest = useCallback(async (req: ExchangeRequest) => {
     if (!authUser) return;
@@ -387,5 +427,5 @@ export function useUserData() {
     return { expGain, coinGain, newBadges: newBadges.filter((b) => !userData.badges.includes(b)) };
   }, [authUser, userData, refreshProfile]);
 
-  return { userData, loading, checkIn, updateUser, addExchangeRequest, setUserData, submitDailyReport };
+  return { userData, loading, checkIn, updateUser, addExchangeRequest, setUserData, submitDailyReport, refreshFromDB };
 }

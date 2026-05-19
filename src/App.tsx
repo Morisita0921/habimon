@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, CalendarDays, Award, Coins, LogOut, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ViewType } from './types';
@@ -57,9 +57,16 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 // ===== 認証済みメイン画面 =====
 function MainApp() {
   const { profile, signOut } = useAuth();
-  const { userData, loading, updateUser, addExchangeRequest, submitDailyReport } = useUserData();
+  const { userData, loading, updateUser, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // ショップを開くたびにDBから最新の申請状態・コイン残高を再取得
+  useEffect(() => {
+    if (currentView === 'shop') {
+      refreshFromDB();
+    }
+  }, [currentView, refreshFromDB]);
 
   // ローディング
   if (loading || !userData) {
