@@ -26,7 +26,6 @@ export default function AdminDailyReports({ facility }: AdminDailyReportsProps) 
         user: u,
         report: u.dailyReports.find((r) => r.date === selectedDate) ?? null,
       }))
-      .filter(({ user }) => !user.isAdmin)
       .sort((a, b) => {
         // 日報あり → 上、なし → 下
         if (a.report && !b.report) return -1;
