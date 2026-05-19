@@ -1,19 +1,24 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag, Sparkles, Image } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
+import { useAuth } from '../contexts/AuthContext';
 import AdminCoinGrant from './AdminCoinGrant';
 import AdminExchangeRequests from './AdminExchangeRequests';
 import AdminUserCreate from './AdminUserCreate';
 import AdminOpeningSchedule from './AdminOpeningSchedule';
 import AdminShopItems from './AdminShopItems';
+import AdminCharacters from './AdminCharacters';
+import AdminBackground from './AdminBackground';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background';
 
 export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
+  const { profile } = useAuth();
+  const isDeveloper = profile?.is_developer === true;
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
@@ -220,6 +225,32 @@ export default function AdminDashboard() {
             <ShoppingBag size={18} />
             ショップ管理
           </button>
+          {isDeveloper && (
+            <>
+              <button
+                onClick={() => setActiveTab('characters')}
+                className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+                  activeTab === 'characters'
+                    ? 'text-purple-600 border-purple-500'
+                    : 'text-gray-400 border-transparent hover:text-gray-600'
+                }`}
+              >
+                <Sparkles size={18} />
+                キャラ管理
+              </button>
+              <button
+                onClick={() => setActiveTab('background')}
+                className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+                  activeTab === 'background'
+                    ? 'text-purple-600 border-purple-500'
+                    : 'text-gray-400 border-transparent hover:text-gray-600'
+                }`}
+              >
+                <Image size={18} />
+                背景設定
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -249,6 +280,20 @@ export default function AdminDashboard() {
       {activeTab === 'shop-items' && (
         <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
           <AdminShopItems />
+        </div>
+      )}
+
+      {/* キャラクター管理タブ（開発者専用） */}
+      {activeTab === 'characters' && isDeveloper && (
+        <div className="max-w-2xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
+          <AdminCharacters />
+        </div>
+      )}
+
+      {/* 背景設定タブ（開発者専用） */}
+      {activeTab === 'background' && isDeveloper && (
+        <div className="max-w-2xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
+          <AdminBackground />
         </div>
       )}
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Sparkles, ArrowLeft } from 'lucide-react';
+import { Check, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import type { User } from '../types';
-import { CHARACTERS, getCharacterById } from '../data/characters';
+import { useCharacters } from '../hooks/useCharacters';
 
 interface CharacterSelectViewProps {
   user: User;
@@ -12,10 +12,13 @@ interface CharacterSelectViewProps {
 }
 
 export default function CharacterSelectView({ user, onSelect, onBack, isFirstTime = false }: CharacterSelectViewProps) {
-  const [focusedId, setFocusedId] = useState<string>(user.selectedCharacterId || CHARACTERS[0]?.id || '');
+  const { availableCharacters, loading: charsLoading } = useCharacters();
+  const [focusedId, setFocusedId] = useState<string>(user.selectedCharacterId || '');
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const focused = getCharacterById(focusedId);
+  const focused = focusedId
+    ? availableCharacters.find((c) => c.id === focusedId)
+    : availableCharacters[0];
 
   const handleSelect = () => {
     if (!focused) return;
@@ -114,8 +117,13 @@ export default function CharacterSelectView({ user, onSelect, onBack, isFirstTim
 
       {/* 選択肢（下部カード） */}
       <div className="relative z-10 bg-white/80 backdrop-blur-md rounded-t-3xl p-4 pb-24 shadow-2xl border-t border-white">
+        {charsLoading && (
+          <div className="flex items-center justify-center py-8 text-gray-400">
+            <Loader2 size={24} className="animate-spin" />
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-2 mb-4">
-          {CHARACTERS.map((c) => (
+          {availableCharacters.map((c) => (
             <button
               key={c.id}
               onClick={() => setFocusedId(c.id)}
@@ -147,9 +155,9 @@ export default function CharacterSelectView({ user, onSelect, onBack, isFirstTim
               )}
             </button>
           ))}
-          {/* 追加予定プレースホルダ */}
-          {CHARACTERS.length < 3 &&
-            Array.from({ length: 3 - CHARACTERS.length }).map((_, i) => (
+          {/* 追加予定プレースホルダ（3未満の場合） */}
+          {!charsLoading && availableCharacters.length < 3 &&
+            Array.from({ length: 3 - availableCharacters.length }).map((_, i) => (
               <div
                 key={`ph-${i}`}
                 className="p-2 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50/50 flex flex-col items-center justify-center text-gray-400"

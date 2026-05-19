@@ -149,6 +149,7 @@ export interface Profile {
   owned_cosmetics: string[];
   equipped_cosmetics: string[];
   is_admin: boolean;
+  is_developer: boolean;
   facility_name: string;
   created_at: string;
   updated_at: string;

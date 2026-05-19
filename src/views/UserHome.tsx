@@ -13,6 +13,7 @@ import { calculateCheckInExp, calculateNewLevel, EXP_VALUES } from '../utils/exp
 import { calculateCheckInCoins, formatCoins } from '../utils/coinCalculator';
 import { getCharacterById, getCharacterFormForLevel, isEvolutionLevel } from '../data/characters';
 import { useOpeningSchedule } from '../hooks/useOpeningSchedule';
+import { useFacilitySettings } from '../hooks/useFacilitySettings';
 
 interface UserHomeProps {
   user: User;
@@ -36,6 +37,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
 
   const selectedCharacter = getCharacterById(user.selectedCharacterId);
   const { isOpenDay } = useOpeningSchedule();
+  const { settings: facilitySettings } = useFacilitySettings();
 
   const today = getTodayString();
   const alreadyCheckedIn = user.checkInHistory.some(
@@ -187,12 +189,18 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
         onClose={handleEvolutionClose}
       />
 
-      {/* === 背景グラデーション === */}
+      {/* === 背景 === */}
       <div
         className="absolute inset-0 -z-10"
-        style={{
-          background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 30%, #E8F8FF 60%, #FFF8F0 80%, #FFE8D0 100%)',
-        }}
+        style={
+          facilitySettings.homeBgType === 'image'
+            ? {
+                backgroundImage: `url(${facilitySettings.homeBgValue})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : { background: facilitySettings.homeBgValue }
+        }
       />
       {/* 雲の演出 */}
       <div className="absolute top-8 left-4 w-24 h-10 bg-white/40 rounded-full blur-sm animate-float" />
