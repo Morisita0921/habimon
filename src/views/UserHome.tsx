@@ -101,7 +101,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
       selectedCharacter &&
       isEvolutionLevel(selectedCharacter, user.level, newLevel);
 
-    const expToNextValue = newLevel < 5 ? [0, 100, 300, 600, 1000][newLevel] : 0;
+    const expToNextValue = newLevel < 5 ? [0, 100, 400, 800, 1200][newLevel] : 0;
 
     // 進化する場合: レベルだけ据え置き、他は即座に反映（演出中に第二形態が見えないように）
     // 進化しない場合: 通常通り全て反映

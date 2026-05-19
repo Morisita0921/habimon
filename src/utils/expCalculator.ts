@@ -1,6 +1,6 @@
 import type { User } from '../types';
 
-const LEVEL_THRESHOLDS = [0, 100, 300, 600, 1000];
+const LEVEL_THRESHOLDS = [0, 100, 400, 800, 1200];
 
 export const EXP_VALUES = {
   checkIn: 20,

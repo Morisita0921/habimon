@@ -346,7 +346,7 @@ export function useUserData() {
     const expGain = EXP_VALUES.dailyReport + (isFull ? EXP_VALUES.dailyReportFull : 0);
     const newExp = userData.exp + expGain;
     const newLevel = calculateNewLevel(newExp);
-    const expToNextValue = newLevel < 5 ? [0, 100, 300, 600, 1000][newLevel] : 0;
+    const expToNextValue = newLevel < 5 ? [0, 100, 400, 800, 1200][newLevel] : 0;
 
     // コイン計算
     const coinGain = COIN_VALUES.dailyReport + (isFull ? COIN_VALUES.dailyReportFull : 0);
