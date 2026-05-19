@@ -1,13 +1,20 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Coins, Package, Gift, AlertTriangle } from 'lucide-react';
-import type { Facility, User, CoinTransaction, ExchangeRequest, ExchangeRequestStatus } from '../types';
+import type { Facility, User, ExchangeRequest, ExchangeRequestStatus } from '../types';
 import { formatCoins } from '../utils/coinCalculator';
 import { getTodayString } from '../utils/dateUtils';
 
 interface AdminExchangeRequestsProps {
   facility: Facility;
-  onUpdateUser: (user: User) => void;
+  onProcessRequest: (
+    userId: string,
+    requestId: string,
+    newStatus: ExchangeRequest['status'],
+    processedAt: string,
+    coinDelta?: number,
+    coinReason?: string,
+  ) => Promise<void>;
 }
 
 type FilterStatus = 'all' | ExchangeRequestStatus;
@@ -19,8 +26,9 @@ const STATUS_INFO: Record<ExchangeRequestStatus, { label: string; color: string;
   rejected: { label: '却下', color: 'bg-gray-200 text-gray-600 border-gray-300', icon: '❌' },
 };
 
-export default function AdminExchangeRequests({ facility, onUpdateUser }: AdminExchangeRequestsProps) {
+export default function AdminExchangeRequests({ facility, onProcessRequest }: AdminExchangeRequestsProps) {
   const [filter, setFilter] = useState<FilterStatus>('pending');
+  const [processing, setProcessing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
     | { type: 'approve' | 'reject' | 'deliver'; userId: string; requestId: string }
     | null
@@ -54,81 +62,61 @@ export default function AdminExchangeRequests({ facility, onUpdateUser }: AdminE
     return counts;
   }, [allRequests]);
 
-  // 現在時刻の文字列
   const nowString = () => {
     const now = new Date();
     return `${getTodayString()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  const updateRequest = (
-    userId: string,
-    requestId: string,
-    updater: (r: ExchangeRequest) => ExchangeRequest,
-    coinDelta: number = 0,
-    coinReason?: string
-  ) => {
-    const target = facility.users.find((u) => u.id === userId);
-    if (!target) return;
-    const updatedRequests = target.exchangeRequests.map((r) =>
-      r.id === requestId ? updater(r) : r
-    );
-    const newCoinHistory = [...target.coinHistory];
-    if (coinDelta !== 0 && coinReason) {
-      const tx: CoinTransaction = {
-        id: `exchange-${Date.now()}`,
-        date: nowString(),
-        type: coinDelta < 0 ? 'spend' : 'earn',
-        amount: Math.abs(coinDelta),
-        reason: coinReason,
-      };
-      newCoinHistory.push(tx);
+  const handleApprove = async (userId: string, requestId: string) => {
+    setProcessing(true);
+    try {
+      await onProcessRequest(userId, requestId, 'approved', nowString());
+    } catch (e) {
+      alert(`承認に失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setProcessing(false);
+      setConfirmAction(null);
     }
-    const updatedUser: User = {
-      ...target,
-      exchangeRequests: updatedRequests,
-      akashiCoins: target.akashiCoins + coinDelta,
-      coinHistory: newCoinHistory,
-    };
-    onUpdateUser(updatedUser);
   };
 
-  const handleApprove = (userId: string, requestId: string) => {
-    updateRequest(userId, requestId, (r) => ({
-      ...r,
-      status: 'approved',
-      processedAt: nowString(),
-    }));
-    setConfirmAction(null);
+  const handleReject = async (userId: string, requestId: string) => {
+    setProcessing(true);
+    try {
+      await onProcessRequest(userId, requestId, 'rejected', nowString());
+    } catch (e) {
+      alert(`却下に失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setProcessing(false);
+      setConfirmAction(null);
+    }
   };
 
-  const handleReject = (userId: string, requestId: string) => {
-    updateRequest(userId, requestId, (r) => ({
-      ...r,
-      status: 'rejected',
-      processedAt: nowString(),
-    }));
-    setConfirmAction(null);
-  };
-
-  const handleDeliver = (userId: string, requestId: string) => {
+  const handleDeliver = async (userId: string, requestId: string) => {
     const target = facility.users.find((u) => u.id === userId);
     const req = target?.exchangeRequests.find((r) => r.id === requestId);
     if (!target || !req) return;
 
-    // 残高チェック
     if (target.akashiCoins < req.price) {
       alert(`${target.name}さんのコイン残高が不足しています（${formatCoins(target.akashiCoins)} / ${formatCoins(req.price)}）`);
       return;
     }
 
-    updateRequest(
-      userId,
-      requestId,
-      (r) => ({ ...r, status: 'delivered', processedAt: nowString() }),
-      -req.price,
-      `交換: ${req.itemName}`
-    );
-    setConfirmAction(null);
+    setProcessing(true);
+    try {
+      await onProcessRequest(
+        userId,
+        requestId,
+        'delivered',
+        nowString(),
+        -req.price,
+        `交換: ${req.itemName}`,
+      );
+    } catch (e) {
+      alert(`受取完了に失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setProcessing(false);
+      setConfirmAction(null);
+    }
   };
 
   return (
@@ -332,9 +320,10 @@ export default function AdminExchangeRequests({ facility, onUpdateUser }: AdminE
                   </button>
                   <button
                     onClick={handler}
-                    className={`flex-1 py-3 rounded-xl text-white font-heading font-bold shadow-md transition-colors ${confirmColor}`}
+                    disabled={processing}
+                    className={`flex-1 py-3 rounded-xl text-white font-heading font-bold shadow-md transition-colors ${processing ? 'opacity-60 cursor-not-allowed' : confirmColor}`}
                   >
-                    {actionLabel}
+                    {processing ? '処理中...' : actionLabel}
                   </button>
                 </div>
               </motion.div>

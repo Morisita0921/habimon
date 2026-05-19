@@ -107,7 +107,7 @@ function MainApp() {
         <AdminDashboard />
         <div className="fixed bottom-4 right-4 flex gap-2">
           <button
-            onClick={() => setCurrentView('home')}
+            onClick={() => { refreshFromDB(); setCurrentView('home'); }}
             className="px-4 py-2 bg-navy text-white rounded-full text-sm shadow-lg hover:bg-navy-light transition-colors min-h-12"
           >
             利用者画面へ

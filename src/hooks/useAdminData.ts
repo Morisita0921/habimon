@@ -118,22 +118,13 @@ export function useAdminData() {
     fetchAllData();
   }, [fetchAllData]);
 
-  // ユーザー更新（管理者からのコイン付与・申請管理など）
+  // ユーザー更新（管理者からのコイン付与など）
   const updateUser = useCallback(async (updatedUser: User) => {
     // プロフィール更新
     await supabase.from('profiles').update({
       akashi_coins: updatedUser.akashiCoins,
       updated_at: new Date().toISOString(),
     }).eq('id', updatedUser.id);
-
-    // 交換申請の状態更新
-    for (const req of updatedUser.exchangeRequests) {
-      await supabase.from('exchange_requests').update({
-        status: req.status,
-        processed_at: req.processedAt ?? null,
-        note: req.note ?? null,
-      }).eq('id', req.id);
-    }
 
     // コイン履歴の差分追加
     const existing = facilityData?.users.find((u) => u.id === updatedUser.id);
@@ -142,7 +133,7 @@ export function useAdminData() {
       if (newTxs.length > 0) {
         await supabase.from('coin_transactions').insert(
           newTxs.map((tx) => ({
-            id: tx.id,
+            id: crypto.randomUUID(),
             user_id: updatedUser.id,
             date: tx.date,
             type: tx.type,
@@ -161,6 +152,94 @@ export function useAdminData() {
         users: prev.users.map((u) => u.id === updatedUser.id ? updatedUser : u),
       };
     });
+  }, [facilityData]);
+
+  // 交換申請のステータス更新（approve / reject / deliver 専用）
+  const processExchangeRequest = useCallback(async (
+    userId: string,
+    requestId: string,
+    newStatus: ExchangeRequest['status'],
+    processedAt: string,
+    coinDelta?: number,
+    coinReason?: string,
+  ) => {
+    // 1. exchange_requests のステータスを更新
+    const { error: reqError } = await supabase
+      .from('exchange_requests')
+      .update({ status: newStatus, processed_at: processedAt })
+      .eq('id', requestId);
+    if (reqError) throw new Error(`申請更新エラー: ${reqError.message}`);
+
+    // 2. コイン消費がある場合（受取完了）
+    if (coinDelta !== undefined && coinReason !== undefined) {
+      const target = facilityData?.users.find((u) => u.id === userId);
+      if (!target) throw new Error('ユーザーが見つかりません');
+
+      const newCoins = target.akashiCoins + coinDelta;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ akashi_coins: newCoins, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+      if (profileError) throw new Error(`コイン更新エラー: ${profileError.message}`);
+
+      const { error: txError } = await supabase
+        .from('coin_transactions')
+        .insert({
+          id: crypto.randomUUID(),
+          user_id: userId,
+          date: processedAt.slice(0, 10),
+          type: coinDelta < 0 ? 'spend' : 'earn',
+          amount: Math.abs(coinDelta),
+          reason: coinReason,
+        });
+      if (txError) throw new Error(`コイン履歴エラー: ${txError.message}`);
+
+      // ローカル状態を更新
+      setFacilityData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map((u) => {
+            if (u.id !== userId) return u;
+            return {
+              ...u,
+              akashiCoins: newCoins,
+              coinHistory: [
+                ...u.coinHistory,
+                {
+                  id: crypto.randomUUID(),
+                  date: processedAt.slice(0, 10),
+                  type: (coinDelta < 0 ? 'spend' : 'earn') as 'spend' | 'earn',
+                  amount: Math.abs(coinDelta),
+                  reason: coinReason,
+                },
+              ],
+              exchangeRequests: u.exchangeRequests.map((r) =>
+                r.id === requestId ? { ...r, status: newStatus, processedAt } : r
+              ),
+            };
+          }),
+        };
+      });
+    } else {
+      // ローカル状態を更新（ステータスのみ）
+      setFacilityData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map((u) => {
+            if (u.id !== userId) return u;
+            return {
+              ...u,
+              exchangeRequests: u.exchangeRequests.map((r) =>
+                r.id === requestId ? { ...r, status: newStatus, processedAt } : r
+              ),
+            };
+          }),
+        };
+      });
+    }
   }, [facilityData]);
 
   // 管理者権限トグル
@@ -219,5 +298,5 @@ export function useAdminData() {
     });
   }, []);
 
-  return { facilityData, loading, updateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData };
+  return { facilityData, loading, updateUser, processExchangeRequest, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData };
 }

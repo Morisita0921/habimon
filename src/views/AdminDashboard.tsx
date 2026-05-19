@@ -17,7 +17,7 @@ import AdminPasscode from './AdminPasscode';
 type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background' | 'passcode';
 
 export default function AdminDashboard() {
-  const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
+  const { facilityData: facility, loading, updateUser: onUpdateUser, processExchangeRequest, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
   const { profile } = useAuth();
   const isDeveloper = profile?.is_developer === true;
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
 
       {/* 申請管理タブ */}
       {activeTab === 'exchange' && (
-        <AdminExchangeRequests facility={facility} onUpdateUser={onUpdateUser} />
+        <AdminExchangeRequests facility={facility} onProcessRequest={processExchangeRequest} />
       )}
 
       {/* メンバー追加タブ */}
