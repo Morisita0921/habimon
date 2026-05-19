@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag, Sparkles, Image, KeyRound } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag, Sparkles, Image, KeyRound, ClipboardList } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
@@ -13,8 +13,9 @@ import AdminShopItems from './AdminShopItems';
 import AdminCharacters from './AdminCharacters';
 import AdminBackground from './AdminBackground';
 import AdminPasscode from './AdminPasscode';
+import AdminDailyReports from './AdminDailyReports';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background' | 'passcode';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'daily-reports' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background' | 'passcode';
 
 export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, processExchangeRequest, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
@@ -194,6 +195,17 @@ export default function AdminDashboard() {
             })()}
           </button>
           <button
+            onClick={() => setActiveTab('daily-reports')}
+            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+              activeTab === 'daily-reports'
+                ? 'text-teal-600 border-teal-500'
+                : 'text-gray-400 border-transparent hover:text-gray-600'
+            }`}
+          >
+            <ClipboardList size={18} />
+            日報
+          </button>
+          <button
             onClick={() => setActiveTab('user-create')}
             className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
               activeTab === 'user-create'
@@ -274,6 +286,11 @@ export default function AdminDashboard() {
       {/* 申請管理タブ */}
       {activeTab === 'exchange' && (
         <AdminExchangeRequests facility={facility} onProcessRequest={processExchangeRequest} />
+      )}
+
+      {/* 日報タブ */}
+      {activeTab === 'daily-reports' && (
+        <AdminDailyReports facility={facility} />
       )}
 
       {/* メンバー追加タブ */}

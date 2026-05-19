@@ -50,6 +50,13 @@ export function useAdminData() {
       .select('*')
       .in('user_id', userIds);
 
+    // 全日報
+    const { data: allDailyReports } = await supabase
+      .from('daily_reports')
+      .select('*')
+      .in('user_id', userIds)
+      .order('date', { ascending: false });
+
     const users: User[] = profiles.map((profile) => {
       const checkInHistory: CheckInRecord[] = (allCheckIns ?? [])
         .filter((r) => r.user_id === profile.id)
@@ -101,7 +108,15 @@ export function useAdminData() {
         checkInHistory,
         coinHistory,
         exchangeRequests,
-        dailyReports: [],
+        dailyReports: (allDailyReports ?? [])
+          .filter((r) => r.user_id === profile.id)
+          .map((r) => ({
+            id: r.id,
+            date: r.date,
+            morning: r.morning ?? '',
+            afternoon: r.afternoon ?? '',
+            submittedAt: r.submitted_at,
+          })),
         isAdmin: profile.is_admin ?? false,
       };
     });
