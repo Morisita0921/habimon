@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag, Sparkles, Image } from 'lucide-react';
+import { AlertTriangle, Users, TrendingUp, Flame, BarChart3, Coins, Gift, UserPlus, CalendarDays, Shield, Pencil, Check, X, Trash2, ShoppingBag, Sparkles, Image, KeyRound } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
@@ -12,8 +12,9 @@ import AdminOpeningSchedule from './AdminOpeningSchedule';
 import AdminShopItems from './AdminShopItems';
 import AdminCharacters from './AdminCharacters';
 import AdminBackground from './AdminBackground';
+import AdminPasscode from './AdminPasscode';
 
-type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background';
+type AdminTab = 'dashboard' | 'coin-grant' | 'exchange' | 'user-create' | 'opening-schedule' | 'shop-items' | 'characters' | 'background' | 'passcode';
 
 export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
@@ -225,6 +226,17 @@ export default function AdminDashboard() {
             <ShoppingBag size={18} />
             ショップ管理
           </button>
+          <button
+            onClick={() => setActiveTab('passcode')}
+            className={`flex items-center gap-2 px-4 py-3 font-heading font-bold text-sm transition-colors border-b-2 -mb-px ${
+              activeTab === 'passcode'
+                ? 'text-teal-600 border-teal-500'
+                : 'text-gray-400 border-transparent hover:text-gray-600'
+            }`}
+          >
+            <KeyRound size={18} />
+            パスコード
+          </button>
           {isDeveloper && (
             <>
               <button
@@ -280,6 +292,13 @@ export default function AdminDashboard() {
       {activeTab === 'shop-items' && (
         <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
           <AdminShopItems />
+        </div>
+      )}
+
+      {/* パスコードタブ */}
+      {activeTab === 'passcode' && (
+        <div className="max-w-5xl mx-auto p-4 md:p-8 pt-0 md:pt-0">
+          <AdminPasscode />
         </div>
       )}
 

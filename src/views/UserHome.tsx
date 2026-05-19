@@ -292,6 +292,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
             isClosedDay={isClosedDay}
             currentStreak={user.streak}
             onCheckIn={handleCheckIn}
+            passcode={facilitySettings.checkinPasscode}
           />
         </div>
       </div>

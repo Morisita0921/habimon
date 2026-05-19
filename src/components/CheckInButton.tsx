@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronUp, Coins } from 'lucide-react';
+import { Check, ChevronUp, Coins, Delete, Lock } from 'lucide-react';
 import { calculateCheckInCoins, formatCoins } from '../utils/coinCalculator';
 
 interface CheckInButtonProps {
@@ -9,6 +9,7 @@ interface CheckInButtonProps {
   isClosedDay: boolean;
   currentStreak: number;
   onCheckIn: (mood: 1 | 2 | 3 | 4 | 5) => void;
+  passcode?: string; // 空文字列または未設定 = パスコード不要
 }
 
 const MOOD_OPTIONS: { value: 1 | 2 | 3 | 4 | 5; label: string; color: string; bgFrom: string; bgTo: string; face: React.ReactNode }[] = [
@@ -81,17 +82,61 @@ const MOOD_OPTIONS: { value: 1 | 2 | 3 | 4 | 5; label: string; color: string; bg
   },
 ];
 
-export default function CheckInButton({ alreadyCheckedIn, canCheckInByTime, isClosedDay, currentStreak, onCheckIn }: CheckInButtonProps) {
+const PIN_KEYS = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['', '0', 'back'],
+];
+
+export default function CheckInButton({ alreadyCheckedIn, canCheckInByTime, isClosedDay, currentStreak, onCheckIn, passcode }: CheckInButtonProps) {
+  const [showPinEntry, setShowPinEntry] = useState(false);
+  const [pinDigits, setPinDigits] = useState('');
+  const [pinError, setPinError] = useState(false);
   const [showMoodPicker, setShowMoodPicker] = useState(false);
   const [expGained, setExpGained] = useState<number | null>(null);
   const [coinsGained, setCoinsGained] = useState<number | null>(null);
   const [coinBonusDays, setCoinBonusDays] = useState<number | null>(null);
 
   const isDisabled = alreadyCheckedIn || !canCheckInByTime || isClosedDay;
+  const passcodeRequired = passcode && passcode.length === 4;
 
   const handleCheckInClick = () => {
     if (isDisabled) return;
-    setShowMoodPicker(true);
+    if (passcodeRequired) {
+      setPinDigits('');
+      setPinError(false);
+      setShowPinEntry(true);
+    } else {
+      setShowMoodPicker(true);
+    }
+  };
+
+  const handlePinKey = (key: string) => {
+    if (key === 'back') {
+      setPinError(false);
+      setPinDigits((d) => d.slice(0, -1));
+      return;
+    }
+    if (pinDigits.length >= 4) return;
+    const next = pinDigits + key;
+    setPinDigits(next);
+    if (next.length === 4) {
+      // 自動判定
+      setTimeout(() => {
+        if (next === passcode) {
+          setShowPinEntry(false);
+          setPinDigits('');
+          setShowMoodPicker(true);
+        } else {
+          setPinError(true);
+          setTimeout(() => {
+            setPinDigits('');
+            setPinError(false);
+          }, 800);
+        }
+      }, 150);
+    }
   };
 
   const handleMoodSelect = (mood: 1 | 2 | 3 | 4 | 5) => {
@@ -116,6 +161,94 @@ export default function CheckInButton({ alreadyCheckedIn, canCheckInByTime, isCl
 
   return (
     <div className="relative">
+      {/* パスコード入力モーダル */}
+      <AnimatePresence>
+        {showPinEntry && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPinEntry(false)}
+            />
+            <motion.div
+              className="fixed inset-0 flex items-center justify-center z-50 px-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 25 }}
+            >
+              <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 w-full max-w-xs border border-white/50">
+                {/* タイトル */}
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Lock size={18} className="text-navy" />
+                  <p className="font-heading font-bold text-gray-700 text-base">
+                    パスコードを にゅうりょく
+                  </p>
+                </div>
+
+                {/* 4ケタ表示 */}
+                <div className="flex justify-center gap-3 mb-5">
+                  {[0, 1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={pinError ? { x: [-4, 4, -4, 4, 0] } : {}}
+                      transition={{ duration: 0.3 }}
+                      className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center text-2xl font-heading font-black transition-all ${
+                        pinError
+                          ? 'bg-red-100 border-red-400 text-red-500'
+                          : pinDigits[i] !== undefined
+                            ? 'bg-navy text-white border-navy shadow-md'
+                            : 'bg-gray-50 border-gray-200 text-gray-300'
+                      }`}
+                    >
+                      {pinError ? '✕' : pinDigits[i] !== undefined ? '●' : '○'}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {pinError && (
+                  <p className="text-center text-xs text-red-500 font-heading font-bold mb-3">
+                    パスコードが ちがいます
+                  </p>
+                )}
+
+                {/* キーパッド */}
+                <div className="grid gap-2">
+                  {PIN_KEYS.map((row, ri) => (
+                    <div key={ri} className="grid grid-cols-3 gap-2">
+                      {row.map((key, ci) => {
+                        if (key === '') return <div key={ci} />;
+                        if (key === 'back') return (
+                          <button
+                            key={ci}
+                            onClick={() => handlePinKey('back')}
+                            className="h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 flex items-center justify-center text-gray-600 transition-colors"
+                          >
+                            <Delete size={20} />
+                          </button>
+                        );
+                        return (
+                          <button
+                            key={ci}
+                            onClick={() => handlePinKey(key)}
+                            disabled={pinError}
+                            className="h-12 rounded-2xl bg-white border-2 border-gray-200 hover:border-navy hover:bg-navy/5 active:bg-navy/10 font-heading font-bold text-xl text-gray-800 transition-colors shadow-sm disabled:opacity-40"
+                          >
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* EXP加算アニメーション（ゴージャス版） */}
       <AnimatePresence>
         {expGained !== null && (

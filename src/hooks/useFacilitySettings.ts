@@ -6,11 +6,13 @@ export const DEFAULT_HOME_BG = 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 30%,
 export interface FacilitySettings {
   homeBgType: 'gradient' | 'image';
   homeBgValue: string;
+  checkinPasscode: string; // 空文字列 = 設定なし（パスコード不要）
 }
 
 const DEFAULTS: FacilitySettings = {
   homeBgType: 'gradient',
   homeBgValue: DEFAULT_HOME_BG,
+  checkinPasscode: '',
 };
 
 export function useFacilitySettings() {
@@ -28,6 +30,7 @@ export function useFacilitySettings() {
       setSettings({
         homeBgType: (map['home_bg_type'] as 'gradient' | 'image') ?? DEFAULTS.homeBgType,
         homeBgValue: map['home_bg_value'] ?? DEFAULTS.homeBgValue,
+        checkinPasscode: map['checkin_passcode'] ?? DEFAULTS.checkinPasscode,
       });
     }
     setLoading(false);
@@ -38,8 +41,17 @@ export function useFacilitySettings() {
   const updateBackground = useCallback(async (type: 'gradient' | 'image', value: string) => {
     await supabase.from('facility_settings').upsert({ key: 'home_bg_type', value: type });
     await supabase.from('facility_settings').upsert({ key: 'home_bg_value', value });
-    setSettings({ homeBgType: type, homeBgValue: value });
+    setSettings((prev) => ({ ...prev, homeBgType: type, homeBgValue: value }));
   }, []);
 
-  return { settings, loading, updateBackground, refresh: fetch };
+  const updatePasscode = useCallback(async (passcode: string) => {
+    if (passcode === '') {
+      await supabase.from('facility_settings').delete().eq('key', 'checkin_passcode');
+    } else {
+      await supabase.from('facility_settings').upsert({ key: 'checkin_passcode', value: passcode });
+    }
+    setSettings((prev) => ({ ...prev, checkinPasscode: passcode }));
+  }, []);
+
+  return { settings, loading, updateBackground, updatePasscode, refresh: fetch };
 }
