@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ClipboardList, Sun, Sunset, ChevronDown, ChevronUp } from 'lucide-react';
+import { ClipboardList, Sun, Moon, ChevronDown, ChevronUp } from 'lucide-react';
 import type { AdminFacilityData } from '../hooks/useAdminData';
 import { getTodayString } from '../utils/dateUtils';
 
@@ -122,7 +122,7 @@ export default function AdminDailyReports({ facility }: AdminDailyReportsProps) 
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="flex items-center gap-1 text-orange-400 shrink-0 w-12 pt-0.5">
-                    <Sunset size={14} />
+                    <Moon size={14} />
                     <span className="text-xs font-bold">午後</span>
                   </div>
                   <p className="text-sm text-gray-700 flex-1">

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Loader2 } from 'lucide-react';
 import { useExchangeItems } from '../hooks/useExchangeItems';
-import type { ExchangeItem } from '../types';
+import type { ExchangeItem, ExchangeItemCategory } from '../types';
+
+const DEFAULT_CATEGORY: ExchangeItemCategory = 'daily';
 
 const EMPTY_FORM = {
   name: '',
@@ -32,7 +34,7 @@ export default function AdminShopItems() {
     setSaving(true);
     setError(null);
     try {
-      await addItem({ ...form, name: form.name.trim(), description: form.description.trim(), available: true });
+      await addItem({ ...form, name: form.name.trim(), description: form.description.trim(), category: DEFAULT_CATEGORY, available: true });
       setForm({ ...EMPTY_FORM });
       setShowAddForm(false);
     } catch (e) {
