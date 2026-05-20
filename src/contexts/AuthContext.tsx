@@ -9,7 +9,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (name: string, email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (name: string, email: string, password: string) => Promise<{ error: string | null; needsVerification?: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -61,21 +61,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    // auth ユーザー作成（メール確認不要）
-    const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
+    // supabase.auth.signUp() を使うことで確認メールが自動送信される
+    const { data, error: authError } = await supabase.auth.signUp({ email, password });
     if (authError || !data.user) {
       const msg = authError?.message ?? '';
-      if (msg.includes('already been registered') || msg.includes('already exists')) {
+      if (msg.includes('already been registered') || msg.includes('already exists') || msg.includes('already registered')) {
         return { error: 'このメールアドレスは既に登録されています' };
       }
       return { error: 'アカウントの作成に失敗しました' };
     }
 
-    // プロフィール作成
+    // プロフィールを先に作成しておく（メール確認前でも作成）
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: data.user.id,
       name,
@@ -94,11 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (profileError) return { error: 'プロフィールの作成に失敗しました' };
 
-    // 作成後、自動でログイン
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-    if (loginError) return { error: 'アカウントを作成しました。ログインしてください。' };
-
-    return { error: null };
+    // メール確認が必要なため自動ログインしない
+    return { error: null, needsVerification: true };
   };
 
   const signOut = async () => {

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabaseAdmin } from '../lib/supabase';
 
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'verify';
 
 export default function LoginView() {
   const { signIn, signUp } = useAuth();
@@ -20,6 +20,7 @@ export default function LoginView() {
   const [regPassword, setRegPassword] = useState('');
   const [regCode, setRegCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,8 +70,13 @@ export default function LoginView() {
       return;
     }
 
-    const { error } = await signUp(regName.trim(), regEmail, regPassword);
-    if (error) setError(error);
+    const { error, needsVerification } = await signUp(regName.trim(), regEmail, regPassword);
+    if (error) {
+      setError(error);
+    } else if (needsVerification) {
+      setVerifyEmail(regEmail);
+      setMode('verify');
+    }
     setLoading(false);
   };
 
@@ -98,25 +104,61 @@ export default function LoginView() {
           <p className="text-white/80 text-sm mt-1">メタゲーム明石</p>
         </div>
 
-        {/* タブ切り替え */}
-        <div className="flex bg-white/30 backdrop-blur-sm rounded-2xl p-1 mb-4">
-          {(['login', 'register'] as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setError(''); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-all ${
-                mode === m
-                  ? 'bg-white text-navy shadow-md'
-                  : 'text-white/80 hover:text-white'
-              }`}
-            >
-              {m === 'login' ? 'ログイン' : '新規登録'}
-            </button>
-          ))}
-        </div>
+        {/* タブ切り替え（verify 時は非表示） */}
+        {mode !== 'verify' && (
+          <div className="flex bg-white/30 backdrop-blur-sm rounded-2xl p-1 mb-4">
+            {(['login', 'register'] as ('login' | 'register')[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m); setError(''); }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-heading font-bold transition-all ${
+                  mode === m
+                    ? 'bg-white text-navy shadow-md'
+                    : 'text-white/80 hover:text-white'
+                }`}
+              >
+                {m === 'login' ? 'ログイン' : '新規登録'}
+              </button>
+            ))}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
-          {mode === 'login' ? (
+          {mode === 'verify' ? (
+            <motion.div
+              key="verify"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl text-center"
+            >
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail size={32} className="text-blue-500" />
+              </div>
+              <h2 className="text-lg font-heading font-bold text-navy mb-2">
+                メールを確認してください
+              </h2>
+              <p className="text-sm text-gray-500 mb-1">
+                以下のアドレスに確認メールを送りました
+              </p>
+              <p className="text-sm font-bold text-blue-600 bg-blue-50 rounded-xl px-4 py-2 mb-4 break-all">
+                {verifyEmail}
+              </p>
+              <p className="text-xs text-gray-400 mb-6">
+                メール内の「メールアドレスを確認する」ボタンを押すと、アカウントが有効化されます。その後ログインしてください。
+              </p>
+              <button
+                onClick={() => { setMode('login'); setError(''); }}
+                className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors shadow-md"
+              >
+                ログイン画面へ
+              </button>
+              <p className="text-xs text-gray-400 mt-3">
+                メールが届かない場合はスタッフにお問い合わせください
+              </p>
+            </motion.div>
+          ) : mode === 'login' ? (
             <motion.div
               key="login"
               initial={{ opacity: 0, x: -20 }}
@@ -254,11 +296,13 @@ export default function LoginView() {
           )}
         </AnimatePresence>
 
-        <p className="text-center text-white/70 text-xs mt-6">
-          {mode === 'login'
-            ? 'パスワードを忘れた場合はスタッフにお問い合わせください'
-            : 'すでにアカウントをお持ちの方はログインタブへ'}
-        </p>
+        {mode !== 'verify' && (
+          <p className="text-center text-white/70 text-xs mt-6">
+            {mode === 'login'
+              ? 'パスワードを忘れた場合はスタッフにお問い合わせください'
+              : 'すでにアカウントをお持ちの方はログインタブへ'}
+          </p>
+        )}
       </motion.div>
     </div>
   );
