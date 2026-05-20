@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Lock, LockOpen, Check, Loader2, Delete } from 'lucide-react';
+import { Lock, LockOpen, Check, Loader2, Delete, UserPlus, UserX } from 'lucide-react';
 import { useFacilitySettings } from '../hooks/useFacilitySettings';
 
 export default function AdminPasscode() {
-  const { settings, loading, updatePasscode } = useFacilitySettings();
+  const { settings, loading, updatePasscode, updateRegistrationCode } = useFacilitySettings();
   const [digits, setDigits] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -55,6 +55,44 @@ export default function AdminPasscode() {
     }
   };
 
+  // 施設登録コード
+  const [regCode, setRegCode] = useState('');
+  const [regSaving, setRegSaving] = useState(false);
+  const [regSaved, setRegSaved] = useState(false);
+  const [regError, setRegError] = useState('');
+
+  useEffect(() => {
+    if (!loading) setRegCode(settings.registrationCode);
+  }, [loading, settings.registrationCode]);
+
+  const handleSaveRegCode = async () => {
+    setRegSaving(true);
+    setRegError('');
+    try {
+      await updateRegistrationCode(regCode.trim());
+      setRegSaved(true);
+      setTimeout(() => setRegSaved(false), 2500);
+    } catch {
+      setRegError('保存に失敗しました');
+    } finally {
+      setRegSaving(false);
+    }
+  };
+
+  const handleClearRegCode = async () => {
+    setRegSaving(true);
+    try {
+      await updateRegistrationCode('');
+      setRegCode('');
+      setRegSaved(true);
+      setTimeout(() => setRegSaved(false), 2500);
+    } catch {
+      setRegError('失敗しました');
+    } finally {
+      setRegSaving(false);
+    }
+  };
+
   const KEYS = [
     ['1', '2', '3'],
     ['4', '5', '6'],
@@ -73,7 +111,7 @@ export default function AdminPasscode() {
   const isEnabled = settings.checkinPasscode !== '';
 
   return (
-    <div className="max-w-sm mx-auto space-y-6">
+    <div className="max-w-sm mx-auto space-y-10">
       <div>
         <h2 className="text-lg font-heading font-bold text-navy">チェックインパスコード</h2>
         <p className="text-sm text-gray-500 mt-1">
@@ -182,6 +220,82 @@ export default function AdminPasscode() {
             'パスコードを保存'
           )}
         </button>
+      </div>
+      {/* ===== 施設登録コード ===== */}
+      <div className="space-y-6 border-t border-gray-100 pt-8">
+        <div>
+          <h2 className="text-lg font-heading font-bold text-navy">施設登録コード</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            ログイン画面の「新規登録」でアカウントを作る際に必要なコードです。
+            スタッフから利用者へ口頭で伝えてください。空にすると自己登録を無効化できます。
+          </p>
+        </div>
+
+        {/* 現在の状態 */}
+        <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 ${
+          settings.registrationCode ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+        }`}>
+          {settings.registrationCode
+            ? <UserPlus size={22} className="text-green-600 shrink-0" />
+            : <UserX size={22} className="text-gray-400 shrink-0" />
+          }
+          <div>
+            <div className={`font-heading font-bold text-sm ${settings.registrationCode ? 'text-green-700' : 'text-gray-500'}`}>
+              {settings.registrationCode
+                ? `登録コード：${settings.registrationCode}`
+                : '登録コードなし（自己登録は無効）'}
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5">
+              {settings.registrationCode
+                ? '利用者はこのコードを使って自分でアカウントを作れます'
+                : '管理者がアカウントを作成する必要があります'}
+            </div>
+          </div>
+        </div>
+
+        {/* コード入力 */}
+        <div>
+          <label className="block text-xs font-bold text-gray-600 mb-2">登録コードを設定</label>
+          <input
+            type="text"
+            value={regCode}
+            onChange={(e) => { setRegCode(e.target.value); setRegError(''); }}
+            placeholder="例：akashi2025"
+            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-navy focus:outline-none text-sm transition-colors"
+          />
+          <p className="text-xs text-gray-400 mt-1">英数字・記号・日本語が使えます</p>
+        </div>
+
+        {regError && <p className="text-sm text-red-500 font-bold text-center">{regError}</p>}
+
+        <div className="flex gap-2">
+          {settings.registrationCode && (
+            <button
+              onClick={handleClearRegCode}
+              disabled={regSaving}
+              className="flex-1 py-3 rounded-xl border-2 border-red-200 text-red-500 font-heading font-bold text-sm hover:bg-red-50 disabled:opacity-50"
+            >
+              コードを削除
+            </button>
+          )}
+          <button
+            onClick={handleSaveRegCode}
+            disabled={regSaving || regCode.trim() === ''}
+            className={`flex-1 py-3 rounded-xl font-heading font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+              regSaved
+                ? 'bg-green-500 text-white'
+                : 'bg-navy text-white disabled:opacity-40 hover:bg-navy/90'
+            }`}
+          >
+            {regSaving ? (
+              <><Loader2 size={16} className="animate-spin" />保存中...</>
+            ) : regSaved ? (
+              <><Check size={16} />保存しました！</>
+            ) : (
+              'コードを保存'
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

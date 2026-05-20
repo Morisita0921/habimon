@@ -6,13 +6,15 @@ export const DEFAULT_HOME_BG = 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 30%,
 export interface FacilitySettings {
   homeBgType: 'gradient' | 'image';
   homeBgValue: string;
-  checkinPasscode: string; // 空文字列 = 設定なし（パスコード不要）
+  checkinPasscode: string;    // 空文字列 = 設定なし（パスコード不要）
+  registrationCode: string;  // 空文字列 = 自己登録不可
 }
 
 const DEFAULTS: FacilitySettings = {
   homeBgType: 'gradient',
   homeBgValue: DEFAULT_HOME_BG,
   checkinPasscode: '',
+  registrationCode: '',
 };
 
 export function useFacilitySettings() {
@@ -31,6 +33,7 @@ export function useFacilitySettings() {
         homeBgType: (map['home_bg_type'] as 'gradient' | 'image') ?? DEFAULTS.homeBgType,
         homeBgValue: map['home_bg_value'] ?? DEFAULTS.homeBgValue,
         checkinPasscode: map['checkin_passcode'] ?? DEFAULTS.checkinPasscode,
+        registrationCode: map['registration_code'] ?? DEFAULTS.registrationCode,
       });
     }
     setLoading(false);
@@ -53,5 +56,14 @@ export function useFacilitySettings() {
     setSettings((prev) => ({ ...prev, checkinPasscode: passcode }));
   }, []);
 
-  return { settings, loading, updateBackground, updatePasscode, refresh: fetch };
+  const updateRegistrationCode = useCallback(async (code: string) => {
+    if (code === '') {
+      await supabase.from('facility_settings').delete().eq('key', 'registration_code');
+    } else {
+      await supabase.from('facility_settings').upsert({ key: 'registration_code', value: code });
+    }
+    setSettings((prev) => ({ ...prev, registrationCode: code }));
+  }, []);
+
+  return { settings, loading, updateBackground, updatePasscode, updateRegistrationCode, refresh: fetch };
 }
