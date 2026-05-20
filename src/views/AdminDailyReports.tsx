@@ -98,7 +98,7 @@ export default function AdminDailyReports({ facility }: AdminDailyReportsProps) 
               <span className="font-heading font-bold text-gray-800 flex-1">{user.name}</span>
               {report ? (
                 <>
-                  <span className="text-xs text-gray-400">{report.submittedAt.slice(11, 16)} 提出</span>
+                  <span className="text-xs text-gray-400">{new Date(report.submittedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })} 提出</span>
                   <span className="text-gray-300 ml-1">
                     {expandedUser === user.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </span>
