@@ -56,7 +56,7 @@ export default function AdminDailyReports({ facility }: AdminDailyReportsProps) 
         <select
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-navy bg-white"
+          className="px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:border-navy bg-white"
         >
           {/* 今日が一覧にない場合も表示 */}
           {!availableDates.includes(today) && (

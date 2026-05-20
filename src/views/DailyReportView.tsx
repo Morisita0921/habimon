@@ -37,10 +37,14 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
   const [submitting, setSubmitting] = useState(false);
   const [reward, setReward] = useState<{ expGain: number; coinGain: number; newBadges: string[] } | null>(null);
 
+  const MIN_NOTE_LENGTH = 20;
+
   const morningText = morningActivity + (morningNote ? `（${morningNote}）` : '');
   const afternoonText = afternoonActivity + (afternoonNote ? `（${afternoonNote}）` : '');
-  const morningComplete = morningActivity.length > 0 && morningNote.trim().length > 0;
-  const afternoonComplete = afternoonActivity.length > 0 && afternoonNote.trim().length > 0;
+  const morningNoteOk = morningNote.trim().length >= MIN_NOTE_LENGTH;
+  const afternoonNoteOk = afternoonNote.trim().length >= MIN_NOTE_LENGTH;
+  const morningComplete = morningActivity.length > 0 && morningNoteOk;
+  const afternoonComplete = afternoonActivity.length > 0 && afternoonNoteOk;
   const isFull = morningComplete && afternoonComplete;
   const canSubmit = morningComplete || afternoonComplete;
 
@@ -172,11 +176,9 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <select
               value={morningActivity}
               onChange={(e) => setMorningActivity(e.target.value)}
-              className={`w-full rounded-xl border border-gray-200 p-3 text-sm bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 ${
-                morningActivity ? 'text-gray-700' : 'text-gray-300'
-              }`}
+              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
             >
-              <option value="">選んでください</option>
+              <option value="" className="text-gray-400">選んでください</option>
               {ACTIVITY_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
@@ -184,10 +186,18 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <textarea
               value={morningNote}
               onChange={(e) => setMorningNote(e.target.value)}
-              placeholder="くわしく書いてね"
+              placeholder="くわしく書いてね（20文字以上）"
               rows={3}
               className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
+            <div className="flex items-center justify-end mt-1 gap-1.5">
+              {morningNote.trim().length > 0 && !morningNoteOk && (
+                <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - morningNote.trim().length}文字</span>
+              )}
+              <span className={`text-xs font-bold ${morningNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
+                {morningNote.trim().length} / {MIN_NOTE_LENGTH}文字
+              </span>
+            </div>
           </div>
 
           {/* 午後 */}
@@ -198,11 +208,9 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <select
               value={afternoonActivity}
               onChange={(e) => setAfternoonActivity(e.target.value)}
-              className={`w-full rounded-xl border border-gray-200 p-3 text-sm bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 ${
-                afternoonActivity ? 'text-gray-700' : 'text-gray-300'
-              }`}
+              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
             >
-              <option value="">選んでください</option>
+              <option value="" className="text-gray-400">選んでください</option>
               {ACTIVITY_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
@@ -210,10 +218,18 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <textarea
               value={afternoonNote}
               onChange={(e) => setAfternoonNote(e.target.value)}
-              placeholder="くわしく書いてね"
+              placeholder="くわしく書いてね（20文字以上）"
               rows={3}
               className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
             />
+            <div className="flex items-center justify-end mt-1 gap-1.5">
+              {afternoonNote.trim().length > 0 && !afternoonNoteOk && (
+                <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - afternoonNote.trim().length}文字</span>
+              )}
+              <span className={`text-xs font-bold ${afternoonNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
+                {afternoonNote.trim().length} / {MIN_NOTE_LENGTH}文字
+              </span>
+            </div>
           </div>
 
           {/* 報酬プレビュー */}
