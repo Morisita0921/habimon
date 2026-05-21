@@ -1,8 +1,8 @@
 // アカシコイン獲得計算ユーティリティ
 
 export const COIN_VALUES = {
-  checkIn: 100,
-  moodRecord: 50,
+  checkIn: 70,
+  moodRecord: 30,
   dailyReport: 80,       // 日報提出
   dailyReportFull: 50,   // 午前・午後の両方記入ボーナス
 } as const;
