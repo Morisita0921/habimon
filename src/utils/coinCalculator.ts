@@ -10,8 +10,8 @@ export const COIN_VALUES = {
 export const STREAK_BONUSES: { days: number; coins: number }[] = [
   { days: 3, coins: 200 },
   { days: 7, coins: 500 },
-  { days: 14, coins: 1000 },
-  { days: 30, coins: 3000 },
+  { days: 14, coins: 700 },
+  { days: 30, coins: 1000 },
 ];
 
 export interface CoinGainBreakdown {
