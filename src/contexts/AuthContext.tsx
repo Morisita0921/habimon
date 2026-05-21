@@ -62,7 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (name: string, email: string, password: string) => {
     // supabase.auth.signUp() を使うことで確認メールが自動送信される
-    const { data, error: authError } = await supabase.auth.signUp({ email, password });
+    // emailRedirectTo でメール認証後にアプリへ戻るURLを指定
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
     if (authError || !data.user) {
       const msg = authError?.message ?? '';
       if (msg.includes('already been registered') || msg.includes('already exists') || msg.includes('already registered')) {
