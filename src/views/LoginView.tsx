@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabaseAdmin } from '../lib/supabase';
 
 type Mode = 'login' | 'register' | 'verify';
+
+const MAX_ATTEMPTS = 5;          // 最大失敗回数
+const LOCK_MINUTES = 10;         // ロック時間（分）
+const LOCK_DURATION_MS = LOCK_MINUTES * 60 * 1000;
+const STORAGE_KEY = 'login_lock';
+
+interface LockState { attempts: number; lockedUntil: number | null; }
+
+function getLockState(): LockState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { attempts: 0, lockedUntil: null };
+}
+function saveLockState(state: LockState) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function clearLockState() {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
 export default function LoginView() {
   const { signIn, signUp } = useAuth();
@@ -25,8 +46,34 @@ export default function LoginView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // ロック状態
+  const [lockSecondsLeft, setLockSecondsLeft] = useState(0);
+
+  const calcSecondsLeft = useCallback(() => {
+    const { lockedUntil } = getLockState();
+    if (!lockedUntil) return 0;
+    return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
+  }, []);
+
+  useEffect(() => {
+    const secs = calcSecondsLeft();
+    setLockSecondsLeft(secs);
+    if (secs <= 0) return;
+    const timer = setInterval(() => {
+      const s = calcSecondsLeft();
+      setLockSecondsLeft(s);
+      if (s <= 0) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [calcSecondsLeft]);
+
+  const isLocked = lockSecondsLeft > 0;
+  const lockMins = Math.floor(lockSecondsLeft / 60);
+  const lockSecs = lockSecondsLeft % 60;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) return;
     if (!loginEmail || !loginPassword) {
       setError('メールアドレスとパスワードを入力してください');
       return;
@@ -34,7 +81,21 @@ export default function LoginView() {
     setLoading(true);
     setError('');
     const { error } = await signIn(loginEmail, loginPassword);
-    if (error) setError('メールアドレスまたはパスワードが違います');
+    if (error) {
+      const state = getLockState();
+      const newAttempts = state.attempts + 1;
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const lockedUntil = Date.now() + LOCK_DURATION_MS;
+        saveLockState({ attempts: newAttempts, lockedUntil });
+        setLockSecondsLeft(LOCK_MINUTES * 60);
+        setError(`ログインに${MAX_ATTEMPTS}回失敗しました。${LOCK_MINUTES}分後に再試行してください。`);
+      } else {
+        saveLockState({ attempts: newAttempts, lockedUntil: null });
+        setError(`メールアドレスまたはパスワードが違います（あと${MAX_ATTEMPTS - newAttempts}回失敗するとロックされます）`);
+      }
+    } else {
+      clearLockState();
+    }
     setLoading(false);
   };
 
@@ -168,6 +229,24 @@ export default function LoginView() {
               className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl"
             >
               <h2 className="text-lg font-heading font-bold text-navy mb-5 text-center">ログイン</h2>
+
+              {/* ロック中バナー */}
+              {isLocked && (
+                <motion.div
+                  className="flex items-center gap-3 bg-red-50 border-2 border-red-200 rounded-xl px-4 py-3 mb-4"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <Lock size={20} className="text-red-500 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-red-600">ログインがロックされています</p>
+                    <p className="text-xs text-red-400">
+                      解除まで：{lockMins}分{String(lockSecs).padStart(2, '0')}秒
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">メールアドレス</label>
@@ -176,7 +255,8 @@ export default function LoginView() {
                     value={loginEmail}
                     onChange={(e) => { setLoginEmail(e.target.value); setError(''); }}
                     placeholder="example@email.com"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-main focus:outline-none text-sm min-h-12 transition-colors"
+                    disabled={isLocked}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-main focus:outline-none text-sm min-h-12 transition-colors disabled:opacity-50 disabled:bg-gray-50"
                     autoComplete="email"
                   />
                 </div>
@@ -187,21 +267,22 @@ export default function LoginView() {
                     value={loginPassword}
                     onChange={(e) => { setLoginPassword(e.target.value); setError(''); }}
                     placeholder="パスワードを入力"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-main focus:outline-none text-sm min-h-12 transition-colors"
+                    disabled={isLocked}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-main focus:outline-none text-sm min-h-12 transition-colors disabled:opacity-50 disabled:bg-gray-50"
                     autoComplete="current-password"
                   />
                 </div>
-                {error && (
+                {error && !isLocked && (
                   <motion.p className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2 px-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     {error}
                   </motion.p>
                 )}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors disabled:opacity-60 shadow-md"
+                  disabled={loading || isLocked}
+                  className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-md"
                 >
-                  {loading ? 'ログイン中...' : 'ログイン'}
+                  {isLocked ? `🔒 ${lockMins}分${String(lockSecs).padStart(2, '0')}秒 後に解除` : loading ? 'ログイン中...' : 'ログイン'}
                 </button>
               </form>
             </motion.div>

@@ -15,6 +15,7 @@ interface DailyReportViewProps {
 const ACTIVITY_OPTIONS = [
   '動画編集',
   '画像編集',
+  'イラスト制作',
   '3Dモデリング',
   '3Dアニメーション',
   'e-スポーツ',
