@@ -9,6 +9,8 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isRecoveryMode: boolean;
+  justVerified: boolean;
+  clearJustVerified: () => void;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (name: string, email: string, password: string) => Promise<{ error: string | null; needsVerification?: boolean }>;
   signOut: () => Promise<void>;
@@ -25,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [justVerified, setJustVerified] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabaseAdmin
@@ -48,10 +51,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
       if (event === 'PASSWORD_RECOVERY') {
+        setSession(session);
         setIsRecoveryMode(true);
+        if (session?.user) fetchProfile(session.user.id);
+        return;
       }
+      // メール認証完了（確認リンクをクリックした直後）はサインアウトしてログイン画面へ
+      if (event === 'SIGNED_IN' && window.location.hash.includes('type=signup')) {
+        supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+        setJustVerified(true);
+        // URLハッシュをクリア
+        window.history.replaceState(null, '', window.location.pathname);
+        return;
+      }
+      setSession(session);
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -130,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const clearRecoveryMode = () => setIsRecoveryMode(false);
+  const clearJustVerified = () => setJustVerified(false);
 
   const refreshProfile = async () => {
     if (session?.user) {
@@ -144,6 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       loading,
       isRecoveryMode,
+      justVerified,
+      clearJustVerified,
       signIn,
       signUp,
       signOut,

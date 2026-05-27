@@ -28,7 +28,7 @@ function clearLockState() {
 }
 
 export default function LoginView() {
-  const { signIn, signUp, sendPasswordResetEmail } = useAuth();
+  const { signIn, signUp, sendPasswordResetEmail, justVerified, clearJustVerified } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
 
   // ログイン
@@ -295,6 +295,22 @@ export default function LoginView() {
               className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl"
             >
               <h2 className="text-lg font-heading font-bold text-navy mb-5 text-center">ログイン</h2>
+
+              {/* メール認証完了バナー */}
+              {justVerified && (
+                <motion.div
+                  className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 mb-4"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <span className="text-lg shrink-0">✅</span>
+                  <div>
+                    <p className="text-sm font-bold text-green-700">メール認証が完了しました！</p>
+                    <p className="text-xs text-green-500">ログインしてください</p>
+                  </div>
+                  <button onClick={clearJustVerified} className="ml-auto text-green-400 hover:text-green-600 text-xs">✕</button>
+                </motion.div>
+              )}
 
               {/* ロック中バナー */}
               {isLocked && (

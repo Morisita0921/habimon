@@ -4,7 +4,7 @@ import { Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ResetPasswordView() {
-  const { updatePassword, clearRecoveryMode } = useAuth();
+  const { updatePassword, signOut } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -71,7 +71,7 @@ export default function ResetPasswordView() {
                 新しいパスワードでログインできます
               </p>
               <button
-                onClick={clearRecoveryMode}
+                onClick={() => signOut()}
                 className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors shadow-md"
               >
                 ログイン画面へ
