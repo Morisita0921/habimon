@@ -5,6 +5,7 @@ import type { ViewType } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useUserData } from './hooks/useUserData';
 import LoginView from './views/LoginView';
+import ResetPasswordView from './views/ResetPasswordView';
 import UserHome from './views/UserHome';
 import CalendarView from './views/CalendarView';
 import AchievementView from './views/AchievementView';
@@ -219,7 +220,7 @@ function MainApp() {
 
 // ===== ルートコンポーネント（認証分岐） =====
 function AppRouter() {
-  const { session, loading } = useAuth();
+  const { session, loading, isRecoveryMode } = useAuth();
 
   if (loading) {
     return (
@@ -231,6 +232,9 @@ function AppRouter() {
       </div>
     );
   }
+
+  // パスワードリセットリンクから戻ってきた場合
+  if (isRecoveryMode) return <ResetPasswordView />;
 
   if (!session) return <LoginView />;
   return <MainApp />;

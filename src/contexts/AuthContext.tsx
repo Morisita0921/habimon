@@ -8,10 +8,14 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isRecoveryMode: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (name: string, email: string, password: string) => Promise<{ error: string | null; needsVerification?: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  sendPasswordResetEmail: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
+  clearRecoveryMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -20,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabaseAdmin
@@ -42,8 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+      }
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -106,6 +114,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
+  const sendPasswordResetEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    if (error) return { error: 'メールの送信に失敗しました' };
+    return { error: null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { error: 'パスワードの更新に失敗しました' };
+    setIsRecoveryMode(false);
+    return { error: null };
+  };
+
+  const clearRecoveryMode = () => setIsRecoveryMode(false);
+
   const refreshProfile = async () => {
     if (session?.user) {
       await fetchProfile(session.user.id);
@@ -118,10 +143,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       loading,
+      isRecoveryMode,
       signIn,
       signUp,
       signOut,
       refreshProfile,
+      sendPasswordResetEmail,
+      updatePassword,
+      clearRecoveryMode,
     }}>
       {children}
     </AuthContext.Provider>

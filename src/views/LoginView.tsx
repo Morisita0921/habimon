@@ -4,7 +4,7 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabaseAdmin } from '../lib/supabase';
 
-type Mode = 'login' | 'register' | 'verify';
+type Mode = 'login' | 'register' | 'verify' | 'forgot' | 'forgot-sent';
 
 const MAX_ATTEMPTS = 5;          // 最大失敗回数
 const LOCK_MINUTES = 10;         // ロック時間（分）
@@ -28,7 +28,7 @@ function clearLockState() {
 }
 
 export default function LoginView() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, sendPasswordResetEmail } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
 
   // ログイン
@@ -43,6 +43,7 @@ export default function LoginView() {
   const [showPassword, setShowPassword] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState('');
 
+  const [forgotEmail, setForgotEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -96,6 +97,16 @@ export default function LoginView() {
     } else {
       clearLockState();
     }
+    setLoading(false);
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) { setError('メールアドレスを入力してください'); return; }
+    setLoading(true);
+    setError('');
+    const { error } = await sendPasswordResetEmail(forgotEmail);
+    if (error) { setError(error); } else { setMode('forgot-sent'); }
     setLoading(false);
   };
 
@@ -165,8 +176,8 @@ export default function LoginView() {
           <p className="text-white/80 text-sm mt-1">メタゲーム明石</p>
         </div>
 
-        {/* タブ切り替え（verify 時は非表示） */}
-        {mode !== 'verify' && (
+        {/* タブ切り替え（verify / forgot 時は非表示） */}
+        {mode !== 'verify' && mode !== 'forgot' && mode !== 'forgot-sent' && (
           <div className="flex bg-white/30 backdrop-blur-sm rounded-2xl p-1 mb-4">
             {(['login', 'register'] as ('login' | 'register')[]).map((m) => (
               <button
@@ -185,7 +196,62 @@ export default function LoginView() {
         )}
 
         <AnimatePresence mode="wait">
-          {mode === 'verify' ? (
+          {mode === 'forgot' ? (
+            <motion.div
+              key="forgot"
+              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl"
+            >
+              <button onClick={() => { setMode('login'); setError(''); }} className="text-xs text-gray-400 hover:text-gray-600 mb-4 flex items-center gap-1">
+                ← ログインに戻る
+              </button>
+              <h2 className="text-lg font-heading font-bold text-navy mb-2 text-center">パスワードをリセット</h2>
+              <p className="text-xs text-gray-500 text-center mb-5">登録したメールアドレスを入力してください。<br />リセット用のリンクをお送りします。</p>
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">メールアドレス</label>
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => { setForgotEmail(e.target.value); setError(''); }}
+                    placeholder="example@email.com"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-main focus:outline-none text-sm min-h-12 transition-colors"
+                    autoComplete="email"
+                  />
+                </div>
+                {error && <motion.p className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2 px-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{error}</motion.p>}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors disabled:opacity-60 shadow-md"
+                >
+                  {loading ? '送信中...' : 'リセットメールを送る'}
+                </button>
+              </form>
+            </motion.div>
+          ) : mode === 'forgot-sent' ? (
+            <motion.div
+              key="forgot-sent"
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl text-center"
+            >
+              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail size={32} className="text-green-500" />
+              </div>
+              <h2 className="text-lg font-heading font-bold text-navy mb-2">メールを送りました</h2>
+              <p className="text-sm text-gray-500 mb-1">以下のアドレスにリセット用リンクを送りました</p>
+              <p className="text-sm font-bold text-green-600 bg-green-50 rounded-xl px-4 py-2 mb-4 break-all">{forgotEmail}</p>
+              <p className="text-xs text-gray-400 mb-6">メール内の「パスワードをリセットする」ボタンをタップしてください。有効期限は1時間です。</p>
+              <button
+                onClick={() => { setMode('login'); setError(''); }}
+                className="w-full py-3 bg-main text-white rounded-xl font-heading font-bold text-base min-h-12 hover:bg-main-dark transition-colors shadow-md"
+              >
+                ログイン画面へ
+              </button>
+            </motion.div>
+          ) : mode === 'verify' ? (
             <motion.div
               key="verify"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -285,6 +351,12 @@ export default function LoginView() {
                   {isLocked ? `🔒 ${lockMins}分${String(lockSecs).padStart(2, '0')}秒 後に解除` : loading ? 'ログイン中...' : 'ログイン'}
                 </button>
               </form>
+              <button
+                onClick={() => { setMode('forgot'); setError(''); }}
+                className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 underline"
+              >
+                パスワードを忘れた方はこちら
+              </button>
             </motion.div>
           ) : (
             <motion.div
