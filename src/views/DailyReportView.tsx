@@ -181,10 +181,10 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
               <button
                 type="button"
                 onClick={() => { setMorningOff(!morningOff); setMorningActivity(''); setMorningNote(''); }}
-                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors ${
+                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors border ${
                   morningOff
-                    ? 'bg-gray-300 text-gray-700'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    ? 'bg-orange-100 text-orange-600 border-orange-300'
+                    : 'bg-sky-50 text-sky-500 border-sky-200 hover:bg-sky-100'
                 }`}
               >
                 {morningOff ? '✕ 休み解除' : '休み'}
@@ -233,10 +233,10 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
               <button
                 type="button"
                 onClick={() => { setAfternoonOff(!afternoonOff); setAfternoonActivity(''); setAfternoonNote(''); }}
-                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors ${
+                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors border ${
                   afternoonOff
-                    ? 'bg-gray-300 text-gray-700'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    ? 'bg-orange-100 text-orange-600 border-orange-300'
+                    : 'bg-sky-50 text-sky-500 border-sky-200 hover:bg-sky-100'
                 }`}
               >
                 {afternoonOff ? '✕ 休み解除' : '休み'}
