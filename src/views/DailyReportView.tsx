@@ -33,21 +33,26 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
 
   const [morningActivity, setMorningActivity] = useState('');
   const [morningNote, setMorningNote] = useState('');
+  const [morningOff, setMorningOff] = useState(false);
   const [afternoonActivity, setAfternoonActivity] = useState('');
   const [afternoonNote, setAfternoonNote] = useState('');
+  const [afternoonOff, setAfternoonOff] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reward, setReward] = useState<{ expGain: number; coinGain: number; newBadges: string[] } | null>(null);
 
   const MIN_NOTE_LENGTH = 20;
 
-  const morningText = morningActivity + (morningNote ? `（${morningNote}）` : '');
-  const afternoonText = afternoonActivity + (afternoonNote ? `（${afternoonNote}）` : '');
+  const morningText = morningOff ? '休み' : morningActivity + (morningNote ? `（${morningNote}）` : '');
+  const afternoonText = afternoonOff ? '休み' : afternoonActivity + (afternoonNote ? `（${afternoonNote}）` : '');
   const morningNoteOk = morningNote.trim().length >= MIN_NOTE_LENGTH;
   const afternoonNoteOk = afternoonNote.trim().length >= MIN_NOTE_LENGTH;
   const morningComplete = morningActivity.length > 0 && morningNoteOk;
   const afternoonComplete = afternoonActivity.length > 0 && afternoonNoteOk;
+  const morningDone = morningOff || morningComplete;
+  const afternoonDone = afternoonOff || afternoonComplete;
   const isFull = morningComplete && afternoonComplete;
-  const canSubmit = morningComplete || afternoonComplete;
+  // 両方とも解決済み、かつ少なくとも一方に実際の内容がある場合のみ提出可能
+  const canSubmit = morningDone && afternoonDone && (morningComplete || afternoonComplete);
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -171,66 +176,106 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
 
           {/* 午前 */}
           <div className="mb-4">
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">
-              ☀️ 午前にやったこと
-            </label>
-            <select
-              value={morningActivity}
-              onChange={(e) => setMorningActivity(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
-            >
-              <option value="" className="text-gray-400">選んでください</option>
-              {ACTIVITY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            <textarea
-              value={morningNote}
-              onChange={(e) => setMorningNote(e.target.value)}
-              placeholder="くわしく書いてね（20文字以上）"
-              rows={3}
-              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
-            />
-            <div className="flex items-center justify-end mt-1 gap-1.5">
-              {morningNote.trim().length > 0 && !morningNoteOk && (
-                <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - morningNote.trim().length}文字</span>
-              )}
-              <span className={`text-xs font-bold ${morningNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
-                {morningNote.trim().length} / {MIN_NOTE_LENGTH}文字
-              </span>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-gray-500">☀️ 午前にやったこと</label>
+              <button
+                type="button"
+                onClick={() => { setMorningOff(!morningOff); setMorningActivity(''); setMorningNote(''); }}
+                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors ${
+                  morningOff
+                    ? 'bg-gray-300 text-gray-700'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                }`}
+              >
+                {morningOff ? '✕ 休み解除' : '休み'}
+              </button>
             </div>
+            {morningOff ? (
+              <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 py-5 text-gray-400">
+                <span className="text-lg">😴</span>
+                <span className="text-sm font-bold">午前は休みです</span>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={morningActivity}
+                  onChange={(e) => setMorningActivity(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
+                >
+                  <option value="" className="text-gray-400">選んでください</option>
+                  {ACTIVITY_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <textarea
+                  value={morningNote}
+                  onChange={(e) => setMorningNote(e.target.value)}
+                  placeholder="くわしく書いてね（20文字以上）"
+                  rows={3}
+                  className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+                />
+                <div className="flex items-center justify-end mt-1 gap-1.5">
+                  {morningNote.trim().length > 0 && !morningNoteOk && (
+                    <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - morningNote.trim().length}文字</span>
+                  )}
+                  <span className={`text-xs font-bold ${morningNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
+                    {morningNote.trim().length} / {MIN_NOTE_LENGTH}文字
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 午後 */}
           <div className="mb-5">
-            <label className="block text-xs font-bold text-gray-500 mb-1.5">
-              🌙 午後にやったこと
-            </label>
-            <select
-              value={afternoonActivity}
-              onChange={(e) => setAfternoonActivity(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
-            >
-              <option value="" className="text-gray-400">選んでください</option>
-              {ACTIVITY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            <textarea
-              value={afternoonNote}
-              onChange={(e) => setAfternoonNote(e.target.value)}
-              placeholder="くわしく書いてね（20文字以上）"
-              rows={3}
-              className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
-            />
-            <div className="flex items-center justify-end mt-1 gap-1.5">
-              {afternoonNote.trim().length > 0 && !afternoonNoteOk && (
-                <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - afternoonNote.trim().length}文字</span>
-              )}
-              <span className={`text-xs font-bold ${afternoonNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
-                {afternoonNote.trim().length} / {MIN_NOTE_LENGTH}文字
-              </span>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-gray-500">🌙 午後にやったこと</label>
+              <button
+                type="button"
+                onClick={() => { setAfternoonOff(!afternoonOff); setAfternoonActivity(''); setAfternoonNote(''); }}
+                className={`text-xs px-3 py-1 rounded-full font-bold transition-colors ${
+                  afternoonOff
+                    ? 'bg-gray-300 text-gray-700'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                }`}
+              >
+                {afternoonOff ? '✕ 休み解除' : '休み'}
+              </button>
             </div>
+            {afternoonOff ? (
+              <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 py-5 text-gray-400">
+                <span className="text-lg">😴</span>
+                <span className="text-sm font-bold">午後は休みです</span>
+              </div>
+            ) : (
+              <>
+                <select
+                  value={afternoonActivity}
+                  onChange={(e) => setAfternoonActivity(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 bg-white focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30"
+                >
+                  <option value="" className="text-gray-400">選んでください</option>
+                  {ACTIVITY_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <textarea
+                  value={afternoonNote}
+                  onChange={(e) => setAfternoonNote(e.target.value)}
+                  placeholder="くわしく書いてね（20文字以上）"
+                  rows={3}
+                  className="w-full mt-2 rounded-xl border border-gray-200 p-3 text-base text-gray-700 resize-none focus:outline-none focus:border-main focus:ring-1 focus:ring-main/30 placeholder:text-gray-300"
+                />
+                <div className="flex items-center justify-end mt-1 gap-1.5">
+                  {afternoonNote.trim().length > 0 && !afternoonNoteOk && (
+                    <span className="text-xs text-orange-400">あと{MIN_NOTE_LENGTH - afternoonNote.trim().length}文字</span>
+                  )}
+                  <span className={`text-xs font-bold ${afternoonNoteOk ? 'text-green-500' : 'text-gray-300'}`}>
+                    {afternoonNote.trim().length} / {MIN_NOTE_LENGTH}文字
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 報酬プレビュー */}
@@ -242,8 +287,9 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
             <span className="flex items-center gap-0.5 text-yellow-600 font-bold">
               <Coins size={12} /> {isFull ? '130' : '80'} コイン
             </span>
-            {isFull && (
-              <span className="text-green-600 font-bold">（両方ボーナス！）</span>
+            {isFull && <span className="text-green-600 font-bold">（両方ボーナス！）</span>}
+            {(morningOff || afternoonOff) && !isFull && canSubmit && (
+              <span className="text-gray-400">（片方休み）</span>
             )}
           </div>
 

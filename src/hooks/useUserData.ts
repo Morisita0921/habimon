@@ -325,7 +325,9 @@ export function useUserData() {
     if (!authUser || !userData) return;
     const today = getTodayString();
     const now = new Date().toISOString();
-    const isFull = morning.trim().length > 0 && afternoon.trim().length > 0;
+    // 「休み」はisFull対象外（両方に実際の内容がある場合のみボーナス）
+    const isFull = morning.trim().length > 0 && morning.trim() !== '休み'
+                && afternoon.trim().length > 0 && afternoon.trim() !== '休み';
 
     // daily_reports に保存
     const { data: inserted } = await supabase
