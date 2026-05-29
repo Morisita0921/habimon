@@ -142,14 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       redirectTo: `${window.location.origin}/`,
     });
     if (error) {
-      console.error('resetPasswordForEmail error:', error.message, error);
+      console.error('resetPasswordForEmail error:', error.message);
       if (error.message.includes('rate limit') || error.message.includes('too many')) {
-        return { error: 'メール送信の上限に達しました。しばらく待ってから再試行してください。' };
+        return { error: 'メールの送信上限に達しました。1時間ほど待ってから再試行してください。' };
       }
-      if (error.message.includes('redirect') || error.message.includes('URL')) {
-        return { error: 'リダイレクトURLの設定エラーです。管理者にお問い合わせください。' };
-      }
-      return { error: `メールの送信に失敗しました（${error.message}）` };
+      return { error: 'メールの送信に失敗しました。時間をおいて再試行してください。' };
     }
     return { error: null };
   };
