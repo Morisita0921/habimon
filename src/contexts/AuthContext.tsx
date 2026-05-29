@@ -128,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    setIsRecoveryMode(false);
   };
 
   const sendPasswordResetEmail = async (email: string) => {
@@ -141,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updatePassword = async (password: string) => {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) return { error: 'パスワードの更新に失敗しました' };
-    setIsRecoveryMode(false);
+    // isRecoveryMode は signOut() 時にクリアする（ここでfalseにするとMainAppに飛んでしまう）
     return { error: null };
   };
 
