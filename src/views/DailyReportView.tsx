@@ -38,6 +38,7 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
   const [afternoonNote, setAfternoonNote] = useState('');
   const [afternoonOff, setAfternoonOff] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [reward, setReward] = useState<{ expGain: number; coinGain: number; newBadges: string[] } | null>(null);
 
   const MIN_NOTE_LENGTH = 20;
@@ -57,8 +58,13 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
-    const result = await onSubmit(morningText, afternoonText);
-    if (result) setReward(result);
+    setSubmitError('');
+    try {
+      const result = await onSubmit(morningText, afternoonText);
+      if (result) setReward(result);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : '送信に失敗しました。もう一度お試しください。');
+    }
     setSubmitting(false);
   };
 
@@ -292,6 +298,16 @@ export default function DailyReportView({ user, onSubmit }: DailyReportViewProps
               <span className="text-gray-400">（片方休み）</span>
             )}
           </div>
+
+          {submitError && (
+            <motion.div
+              className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-3 text-sm text-red-600"
+              initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+            >
+              <span>⚠️</span>
+              <span>{submitError}</span>
+            </motion.div>
+          )}
 
           <button
             onClick={handleSubmit}

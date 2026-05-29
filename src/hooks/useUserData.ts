@@ -330,7 +330,7 @@ export function useUserData() {
                 && afternoon.trim().length > 0 && afternoon.trim() !== '休み';
 
     // daily_reports に保存
-    const { data: inserted } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from('daily_reports')
       .insert({
         user_id: authUser.id,
@@ -342,7 +342,10 @@ export function useUserData() {
       .select()
       .single();
 
-    if (!inserted) return;
+    if (insertError || !inserted) {
+      console.error('日報の保存に失敗:', insertError?.message);
+      throw new Error('日報の保存に失敗しました。もう一度お試しください。');
+    }
 
     // EXP 計算
     const expGain = EXP_VALUES.dailyReport + (isFull ? EXP_VALUES.dailyReportFull : 0);
@@ -409,14 +412,14 @@ export function useUserData() {
       ],
     } : null);
 
-    // Googleスプシに送信（プルダウンとメモを分離）
+    // Googleスプシに送信（非同期・結果を待たない）
     const parseParts = (text: string) => {
       const match = text.match(/^(.+?)（(.+)）$/);
       return match ? { activity: match[1], note: match[2] } : { activity: text, note: '' };
     };
     const mParts = parseParts(morning.trim());
     const aParts = parseParts(afternoon.trim());
-    await sendToGoogleSheet({
+    sendToGoogleSheet({
       userName: userData.name,
       date: today,
       morningActivity: mParts.activity,
