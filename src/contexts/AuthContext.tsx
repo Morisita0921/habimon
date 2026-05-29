@@ -69,7 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(session);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        // プロフィール取得が完了するまでローディング状態にする
+        setLoading(true);
+        fetchProfile(session.user.id).finally(() => setLoading(false));
       } else {
         setProfile(null);
       }
@@ -129,6 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setIsRecoveryMode(false);
+    // パスワードリセットリンク等のURLハッシュをクリア
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   };
 
   const sendPasswordResetEmail = async (email: string) => {
