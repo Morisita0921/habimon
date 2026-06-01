@@ -107,10 +107,15 @@ export function useUserData() {
       setLoading(false);
       return;
     }
-    buildUserFromDB(authUser.id).then((u) => {
-      setUserData(u);
-      setLoading(false);
-    });
+    buildUserFromDB(authUser.id)
+      .then((u) => {
+        setUserData(u);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('ユーザーデータの取得に失敗:', err);
+        setLoading(false);
+      });
   }, [authUser, profile, buildUserFromDB]);
 
   // チェックイン処理

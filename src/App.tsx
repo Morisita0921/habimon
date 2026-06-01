@@ -69,8 +69,8 @@ function MainApp() {
     }
   }, [currentView, refreshFromDB]);
 
-  // ローディング
-  if (loading || !userData) {
+  // ローディング中
+  if (loading) {
     return (
       <div
         className="w-full max-w-lg min-h-screen flex items-center justify-center shadow-2xl"
@@ -79,6 +79,28 @@ function MainApp() {
         <div className="text-center">
           <div className="text-5xl mb-3 animate-bounce">🐾</div>
           <p className="text-white/80 font-heading">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // データ取得失敗（ローディング完了後にuserDataがない場合）
+  if (!userData) {
+    return (
+      <div
+        className="w-full max-w-lg min-h-screen flex items-center justify-center shadow-2xl"
+        style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #E8F8FF 100%)' }}
+      >
+        <div className="text-center px-6">
+          <div className="text-5xl mb-3">😢</div>
+          <p className="text-white font-heading font-bold mb-2">データを読み込めませんでした</p>
+          <p className="text-white/70 text-sm font-heading mb-6">ログインし直してお試しください</p>
+          <button
+            onClick={signOut}
+            className="px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl font-heading font-bold transition-colors border border-white/30"
+          >
+            ログアウト
+          </button>
         </div>
       </div>
     );
