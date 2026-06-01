@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       is_admin: false,
       facility_name: 'メタゲーム明石',
     });
-    if (profileError) return { error: 'プロフィールの作成に失敗しました' };
+    if (profileError) return { error: `プロフィールの作成に失敗しました: ${profileError.message} (code: ${profileError.code})` };
 
     // メール確認が必要なため自動ログインしない
     return { error: null, needsVerification: true };
