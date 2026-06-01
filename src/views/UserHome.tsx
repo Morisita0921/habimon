@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Coins, Sparkles } from 'lucide-react';
+import { Flame, Coins, Sparkles, LogOut } from 'lucide-react';
 import type { User, CoinTransaction } from '../types';
 import Character from '../components/Character';
 import CheckInButton from '../components/CheckInButton';
@@ -20,9 +20,10 @@ interface UserHomeProps {
   onUpdateUser: (user: User) => void;
   onReset: () => void;
   onOpenCharacterSelect?: () => void;
+  onLogout?: () => void;
 }
 
-export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpenCharacterSelect }: UserHomeProps) {
+export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpenCharacterSelect, onLogout }: UserHomeProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<{ show: boolean; level: number; formLabel?: string }>({ show: false, level: 0 });
   const [evolutionInfo, setEvolutionInfo] = useState<{
@@ -209,7 +210,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
 
       {/* === ヘッダーステータスバー === */}
       <div className="relative z-10 px-3 pt-2 pb-1">
-        {/* 1段目：レベル・名前 + リセット */}
+        {/* 1段目：レベル・名前 + ログアウト */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-b from-amber-400 to-amber-600 text-white rounded-lg px-2.5 py-1 text-sm font-bold shadow-md border border-amber-300">
@@ -229,6 +230,16 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
               </button>
             )}
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/80 hover:text-white transition-colors"
+              aria-label="ログアウト"
+            >
+              <LogOut size={13} />
+              <span className="text-xs font-heading">ログアウト</span>
+            </button>
+          )}
         </div>
 
         {/* 2段目：EXPバー + コイン */}

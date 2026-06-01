@@ -175,6 +175,7 @@ function MainApp() {
             onUpdateUser={(u) => updateUser(u)}
             onReset={() => {}}
             onOpenCharacterSelect={() => setCurrentView('character-select')}
+            onLogout={() => setShowLogoutConfirm(true)}
           />
         )}
         {currentView === 'calendar' && <CalendarView user={userData} />}
