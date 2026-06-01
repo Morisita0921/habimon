@@ -87,14 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    // supabase.auth.signUp() を使うことで確認メールが自動送信される
-    // emailRedirectTo でメール認証後にアプリへ戻るURLを指定
-    const { data, error: authError } = await supabase.auth.signUp({
+    // Admin API を使用：確認メール不要・レート制限を回避
+    const { data, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        emailRedirectTo: window.location.origin,
-      },
+      email_confirm: true,
     });
     if (authError || !data.user) {
       const msg = authError?.message ?? '';
@@ -104,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: 'アカウントの作成に失敗しました' };
     }
 
-    // プロフィールを先に作成しておく（メール確認前でも作成）
+    // プロフィール作成
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
       id: data.user.id,
       name,
@@ -122,15 +119,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       facility_name: 'メタゲーム明石',
     });
     if (profileError) {
-      // 23503 = 外部キー制約違反：Supabaseがメール列挙対策で偽IDを返した＝メール登録済み
       if (profileError.code === '23503') {
         return { error: 'このメールアドレスは既に登録されています' };
       }
       return { error: 'プロフィールの作成に失敗しました' };
     }
 
-    // メール確認が必要なため自動ログインしない
-    return { error: null, needsVerification: true };
+    // 確認メール不要・すぐログイン可能
+    return { error: null, needsVerification: false };
   };
 
   const signOut = async () => {

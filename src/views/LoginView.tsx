@@ -46,6 +46,7 @@ export default function LoginView() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [accountCreated, setAccountCreated] = useState(false);
 
   // ロック状態
   const [lockSecondsLeft, setLockSecondsLeft] = useState(0);
@@ -148,6 +149,10 @@ export default function LoginView() {
     } else if (needsVerification) {
       setVerifyEmail(regEmail);
       setMode('verify');
+    } else {
+      // 確認メール不要・すぐログイン可能
+      setAccountCreated(true);
+      setMode('login');
     }
     setLoading(false);
   };
@@ -295,6 +300,22 @@ export default function LoginView() {
               className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl"
             >
               <h2 className="text-lg font-heading font-bold text-navy mb-5 text-center">ログイン</h2>
+
+              {/* アカウント作成完了バナー */}
+              {accountCreated && (
+                <motion.div
+                  className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 mb-4"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <span className="text-lg shrink-0">✅</span>
+                  <div>
+                    <p className="text-sm font-bold text-green-700">アカウントを作成しました！</p>
+                    <p className="text-xs text-green-500">メールアドレスとパスワードでログインしてください</p>
+                  </div>
+                  <button onClick={() => setAccountCreated(false)} className="ml-auto text-green-400 hover:text-green-600 text-xs">✕</button>
+                </motion.div>
+              )}
 
               {/* メール認証完了バナー */}
               {justVerified && (
