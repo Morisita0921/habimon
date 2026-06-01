@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { CharacterImages } from '../types';
 import { getCharacterById, getCharacterImageForLevel } from '../data/characters';
@@ -12,6 +13,8 @@ interface CharacterProps {
 }
 
 export default function Character({ level, size = 200, animate = true, images, selectedCharacterId }: CharacterProps) {
+  const [imgError, setImgError] = useState(false);
+
   // 優先順位: 1) selectedCharacterId (レジストリ) → 2) カスタム images (旧システム) → 3) デフォルトSVG
   const registryCharacter = getCharacterById(selectedCharacterId);
   const registryImageUrl = registryCharacter
@@ -20,7 +23,7 @@ export default function Character({ level, size = 200, animate = true, images, s
   const customImageUrl = images?.[`lv${level}` as keyof CharacterImages];
   const imageUrl = registryImageUrl || customImageUrl;
 
-  if (imageUrl) {
+  if (imageUrl && !imgError) {
     return (
       <motion.div
         animate={animate ? { y: [0, -8, 0] } : undefined}
@@ -33,6 +36,7 @@ export default function Character({ level, size = 200, animate = true, images, s
           alt={`レベル${level}のキャラクター`}
           className="w-full h-full object-contain drop-shadow-lg"
           style={{ maxWidth: size, maxHeight: size }}
+          onError={() => setImgError(true)}
         />
       </motion.div>
     );

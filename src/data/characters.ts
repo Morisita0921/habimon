@@ -4,10 +4,16 @@ import type { CharacterDefinition, CharacterForm } from '../types';
  * キャラクターレジストリ
  *
  * 新しいキャラクターを追加する場合:
- * 1. public/characters/<id>/ フォルダに画像を配置
- *    - first.png  (第一形態)
- *    - second.png (第二形態)
+ * 1. public/characters/<id>/ フォルダに画像を配置（推奨: 500×500px 透過PNG）
+ *    - first.png  (第一形態: Lv.1-2)
+ *    - second.png (第二形態: Lv.3-4)
+ *    - third.png  (第三形態: Lv.5)
  * 2. このファイルに CharacterDefinition を追加
+ *
+ * 形態とレベルの対応（共通）:
+ *   第一形態: Lv.1, 2
+ *   第二形態: Lv.3, 4
+ *   第三形態: Lv.5
  */
 export const CHARACTERS: CharacterDefinition[] = [
   {
@@ -22,9 +28,14 @@ export const CHARACTERS: CharacterDefinition[] = [
         label: '第一形態',
       },
       {
-        levels: [3, 4, 5],
+        levels: [3, 4],
         imageUrl: '/characters/metao/second.png',
         label: '第二形態',
+      },
+      {
+        levels: [5],
+        imageUrl: '/characters/metao/third.png',
+        label: '第三形態',
       },
     ],
   },
