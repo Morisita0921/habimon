@@ -121,7 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       is_admin: false,
       facility_name: 'メタゲーム明石',
     });
-    if (profileError) return { error: `プロフィールの作成に失敗しました: ${profileError.message} (code: ${profileError.code})` };
+    if (profileError) {
+      // 23503 = 外部キー制約違反：Supabaseがメール列挙対策で偽IDを返した＝メール登録済み
+      if (profileError.code === '23503') {
+        return { error: 'このメールアドレスは既に登録されています' };
+      }
+      return { error: 'プロフィールの作成に失敗しました' };
+    }
 
     // メール確認が必要なため自動ログインしない
     return { error: null, needsVerification: true };
