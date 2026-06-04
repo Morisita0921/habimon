@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, Loader2, ImageOff, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, Loader2, ImageOff, Upload, Monitor } from 'lucide-react';
 import { supabaseAdmin as supabase } from '../lib/supabase';
 import { useCharacters } from '../hooks/useCharacters';
 import type { CharacterRecord } from '../hooks/useCharacters';
@@ -109,6 +109,91 @@ function ImageUploadField({
   );
 }
 
+// ===== ホーム画面風プレビューモーダル =====
+function HomePreviewModal({ char, onClose }: { char: CharacterRecord; onClose: () => void }) {
+  const forms = [
+    { label: '第一形態', level: 'Lv.1〜2', url: char.form1ImageUrl },
+    { label: '第二形態', level: 'Lv.3〜4', url: char.form2ImageUrl },
+    ...(char.form3ImageUrl ? [{ label: '第三形態', level: 'Lv.5', url: char.form3ImageUrl }] : []),
+  ];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const active = forms[activeIndex];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative w-full max-w-xs rounded-3xl overflow-hidden shadow-2xl">
+        {/* ホーム画面風背景 */}
+        <div
+          className="relative flex flex-col items-center pt-6 pb-4 px-4"
+          style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 50%, #E8F8FF 100%)' }}
+        >
+          {/* 閉じるボタン */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center text-white"
+          >
+            <X size={16} />
+          </button>
+
+          {/* 雲の演出 */}
+          <div className="absolute top-4 left-3 w-16 h-6 bg-white/40 rounded-full blur-sm" />
+          <div className="absolute top-8 right-6 w-20 h-7 bg-white/30 rounded-full blur-sm" />
+
+          {/* キャラ名 */}
+          <p className="text-white font-heading font-bold text-base drop-shadow-md mb-1 z-10">
+            {char.name}
+          </p>
+          <p className="text-white/70 text-xs mb-4 z-10">{active.label}（{active.level}）</p>
+
+          {/* キャラクター画像 */}
+          <div className="w-44 h-44 flex items-center justify-center z-10">
+            {active.url ? (
+              <img
+                src={active.url}
+                alt={active.label}
+                className="w-full h-full object-contain drop-shadow-2xl"
+                style={{ animation: 'float 2s ease-in-out infinite' }}
+              />
+            ) : (
+              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center">
+                <ImageOff size={40} className="text-white/50" />
+              </div>
+            )}
+          </div>
+
+          {/* 形態切り替えタブ */}
+          <div className="flex gap-2 mt-4 z-10">
+            {forms.map((f, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveIndex(i)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  activeIndex === i
+                    ? 'bg-white text-navy shadow-md'
+                    : 'bg-white/30 text-white hover:bg-white/50'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 草原エリア */}
+        <div className="bg-green-200 h-6" />
+      </div>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 interface CharacterFormProps {
   initial: FormValue;
   onSubmit: (v: FormValue) => Promise<void>;
@@ -206,6 +291,7 @@ export default function AdminCharacters() {
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<CharacterRecord | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CharacterRecord | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<CharacterRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const handleAdd = async (form: FormValue) => {
@@ -345,6 +431,13 @@ export default function AdminCharacters() {
 
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
+                    onClick={() => setPreviewTarget(char)}
+                    className="p-1.5 text-sky-500 hover:bg-sky-50 rounded-lg transition-colors"
+                    title="ホーム画面でプレビュー"
+                  >
+                    <Monitor size={16} />
+                  </button>
+                  <button
                     onClick={() => toggleAvailable(char.id, !char.available)}
                     className={`p-1.5 rounded-lg transition-colors ${
                       char.available
@@ -375,6 +468,11 @@ export default function AdminCharacters() {
           </div>
         ))}
       </div>
+
+      {/* ホーム画面プレビューモーダル */}
+      {previewTarget && (
+        <HomePreviewModal char={previewTarget} onClose={() => setPreviewTarget(null)} />
+      )}
 
       {/* 削除確認モーダル */}
       {deleteTarget && (
