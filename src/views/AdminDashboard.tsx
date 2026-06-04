@@ -72,9 +72,11 @@ export default function AdminDashboard() {
   const users = facility?.users ?? [];
   const businessDays = getBusinessDaysInMonth(currentYear, currentMonth);
 
+  const nonAdminUsers = useMemo(() => users.filter((u) => !u.isAdmin), [users]);
+
   const todayAttendees = useMemo(() =>
-    users.filter((u) => u.checkInHistory.some((r) => r.date === todayStr && r.checkedIn)).length,
-  [users, todayStr]);
+    nonAdminUsers.filter((u) => u.checkInHistory.some((r) => r.date === todayStr && r.checkedIn)).length,
+  [nonAdminUsers, todayStr]);
 
   const monthlyRate = useMemo(() => {
     if (users.length === 0 || businessDays === 0) return 0;
@@ -365,7 +367,7 @@ export default function AdminDashboard() {
               <span className="text-sm text-gray-500">本日の出席</span>
             </div>
             <div className="text-3xl font-bold text-navy">
-              {todayAttendees} <span className="text-lg text-gray-400">/ {facility.users.length}</span>
+              {todayAttendees} <span className="text-lg text-gray-400">/ {nonAdminUsers.length}</span>
             </div>
           </motion.div>
 
