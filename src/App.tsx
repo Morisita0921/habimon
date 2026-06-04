@@ -59,13 +59,13 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 function MainApp() {
   const { profile, signOut } = useAuth();
   const { userData, loading, updateUser, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
-  const [currentView] = useState<ViewType>(
+  const [currentView, setCurrentView] = useState<ViewType>(
     () => (sessionStorage.getItem('habimon_view') as ViewType) || 'home'
   );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleSetView = (view: ViewType) => {
-    handleSetView(view);
+    setCurrentView(view);
     sessionStorage.setItem('habimon_view', view);
   };
 
