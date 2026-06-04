@@ -109,85 +109,153 @@ function ImageUploadField({
   );
 }
 
-// ===== ホーム画面風プレビューモーダル =====
+// ===== ホーム画面実寸プレビューモーダル =====
 function HomePreviewModal({ char, onClose }: { char: CharacterRecord; onClose: () => void }) {
   const forms = [
-    { label: '第一形態', level: 'Lv.1〜2', url: char.form1ImageUrl },
-    { label: '第二形態', level: 'Lv.3〜4', url: char.form2ImageUrl },
-    ...(char.form3ImageUrl ? [{ label: '第三形態', level: 'Lv.5', url: char.form3ImageUrl }] : []),
+    { label: '第一形態', levelLabel: 'Lv.1〜2', lv: 1, url: char.form1ImageUrl },
+    { label: '第二形態', levelLabel: 'Lv.3〜4', lv: 3, url: char.form2ImageUrl },
+    ...(char.form3ImageUrl ? [{ label: '第三形態', levelLabel: 'Lv.5', lv: 5, url: char.form3ImageUrl }] : []),
   ];
   const [activeIndex, setActiveIndex] = useState(0);
   const active = forms[activeIndex];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-xs rounded-3xl overflow-hidden shadow-2xl">
-        {/* ホーム画面風背景 */}
-        <div
-          className="relative flex flex-col items-center pt-6 pb-4 px-4"
-          style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 50%, #E8F8FF 100%)' }}
-        >
-          {/* 閉じるボタン */}
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 w-8 h-8 bg-black/20 hover:bg-black/30 rounded-full flex items-center justify-center text-white"
-          >
-            <X size={16} />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      {/* 実際のアプリと同じ max-w-lg コンテナ */}
+      <div className="relative w-full max-w-lg h-full flex flex-col overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #87CEEB 0%, #B0E0FF 40%, #E8F8FF 70%, #FFF8F0 100%)' }}
+      >
+        {/* 雲 */}
+        <div className="absolute top-8 left-4 w-24 h-10 bg-white/40 rounded-full blur-sm" />
+        <div className="absolute top-16 right-8 w-32 h-12 bg-white/30 rounded-full blur-sm" />
+        <div className="absolute top-28 left-1/4 w-20 h-8 bg-white/25 rounded-full blur-sm" />
 
-          {/* 雲の演出 */}
-          <div className="absolute top-4 left-3 w-16 h-6 bg-white/40 rounded-full blur-sm" />
-          <div className="absolute top-8 right-6 w-20 h-7 bg-white/30 rounded-full blur-sm" />
+        {/* ===ヘッダー（実際と同じ構成）=== */}
+        <div className="relative z-10 px-3 pt-3 pb-1">
+          {/* 1段目 */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-b from-amber-400 to-amber-600 text-white rounded-lg px-2.5 py-1 text-sm font-bold shadow-md border border-amber-300">
+                Lv.{active.lv}
+              </div>
+              <span className="font-heading font-bold text-white text-base drop-shadow-md">{char.name}</span>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-xs text-white/70 font-heading bg-black/20 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                👤 プレビュー
+              </span>
+            </div>
+          </div>
+          {/* 2段目：EXPバー風 + コイン */}
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <div className="flex-1 bg-white/20 rounded-full h-4 overflow-hidden backdrop-blur-sm border border-white/30">
+              <div className="h-full rounded-full bg-gradient-to-r from-main to-sub" style={{ width: '45%' }} />
+            </div>
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/50 to-yellow-500/50 rounded-full px-4 py-1.5 backdrop-blur-sm border border-yellow-300/40 shadow-md">
+              <span className="text-yellow-200 text-base">🪙</span>
+              <span className="text-white text-lg font-bold drop-shadow-sm">1,200</span>
+            </div>
+          </div>
+          {/* 3段目：連続出席 */}
+          <div className="mt-2 flex justify-center">
+            <div className="flex items-center gap-1">
+              <span className="text-orange-400 text-2xl">🔥</span>
+              <span className="text-lg font-heading font-black tracking-wide"
+                style={{
+                  background: 'linear-gradient(180deg, #FFF7CC 0%, #FFD700 40%, #FF8C00 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))',
+                }}>
+                れんぞく出席 7日
+              </span>
+            </div>
+          </div>
+        </div>
 
-          {/* キャラ名 */}
-          <p className="text-white font-heading font-bold text-base drop-shadow-md mb-1 z-10">
-            {char.name}
-          </p>
-          <p className="text-white/70 text-xs mb-4 z-10">{active.label}（{active.level}）</p>
-
-          {/* キャラクター画像 */}
-          <div className="w-44 h-44 flex items-center justify-center z-10">
+        {/* ===キャラクターエリア=== */}
+        <div className="flex-1 flex flex-col items-center justify-center relative px-4 -mt-2">
+          <div className="relative">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-8 rounded-full opacity-30"
+              style={{ background: 'radial-gradient(ellipse, rgba(255,200,100,0.6) 0%, transparent 70%)' }} />
             {active.url ? (
               <img
                 src={active.url}
                 alt={active.label}
-                className="w-full h-full object-contain drop-shadow-2xl"
-                style={{ animation: 'float 2s ease-in-out infinite' }}
+                className="object-contain drop-shadow-2xl"
+                style={{ width: 280, height: 280, animation: 'charFloat 2s ease-in-out infinite' }}
               />
             ) : (
-              <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center">
-                <ImageOff size={40} className="text-white/50" />
+              <div className="w-64 h-64 flex items-center justify-center">
+                <ImageOff size={80} className="text-white/40" />
               </div>
             )}
           </div>
+          {/* チェックインボタン風 */}
+          <div className="mt-4 px-8 py-4 bg-white/30 backdrop-blur-sm rounded-2xl border-2 border-white/50 text-white font-heading font-bold text-base shadow-lg">
+            ✅ チェックイン済み
+          </div>
+        </div>
 
-          {/* 形態切り替えタブ */}
-          <div className="flex gap-2 mt-4 z-10">
-            {forms.map((f, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  activeIndex === i
-                    ? 'bg-white text-navy shadow-md'
-                    : 'bg-white/30 text-white hover:bg-white/50'
-                }`}
-              >
-                {f.label}
-              </button>
+        {/* ===下部ステータス=== */}
+        <div className="relative z-10 px-4 pb-20">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: '総出席日数', value: '42日', icon: '📅' },
+              { label: 'バッジ', value: '5個', icon: '🏅' },
+              { label: 'アカシコイン', value: '1,200', icon: '🪙' },
+            ].map((s) => (
+              <div key={s.label} className="bg-white/25 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/30">
+                <div className="text-xl mb-0.5">{s.icon}</div>
+                <div className="text-white font-bold text-sm drop-shadow-sm">{s.value}</div>
+                <div className="text-white/70 text-[10px] font-heading">{s.label}</div>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* 草原エリア */}
-        <div className="bg-green-200 h-6" />
+        {/* ===ボトムナビ（ダミー）=== */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-20">
+          <div className="flex">
+            {['ホーム', 'カレンダー', 'にっぽう', 'じっせき', 'ショップ'].map((label, i) => (
+              <div key={label} className={`flex-1 flex flex-col items-center py-2 pt-3 ${i === 0 ? 'text-main' : 'text-gray-300'}`}>
+                <div className="w-5 h-5 bg-current rounded opacity-50" />
+                <span className="text-xs mt-1 font-heading">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ===オーバーレイUI（形態切替 + 閉じる）=== */}
+        {/* 閉じるボタン */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-30 w-9 h-9 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white shadow-lg"
+        >
+          <X size={18} />
+        </button>
+
+        {/* 形態切り替えタブ（右下固定） */}
+        <div className="absolute bottom-20 left-0 right-0 z-30 flex justify-center gap-2 pb-2">
+          {forms.map((f, i) => (
+            <button
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold shadow-md transition-all ${
+                activeIndex === i
+                  ? 'bg-white text-navy scale-105'
+                  : 'bg-black/30 text-white hover:bg-black/50'
+              }`}
+            >
+              {f.label}<span className="ml-1 opacity-70">{f.levelLabel}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+        @keyframes charFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
       `}</style>
     </div>
