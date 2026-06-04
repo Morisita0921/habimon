@@ -69,14 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(session);
       if (session?.user) {
-        if (event === 'SIGNED_IN') {
-          // 新規ログイン時のみローディング表示（プロフィール取得完了まで待機）
-          setLoading(true);
-          fetchProfile(session.user.id).finally(() => setLoading(false));
-        } else {
-          // TOKEN_REFRESHED等のタブ復帰・自動更新はサイレントに更新（画面リセットしない）
-          fetchProfile(session.user.id);
-        }
+        // ローディング表示はしない（MainAppのアンマウント→currentViewリセットを防ぐ）
+        // プロフィール未取得の場合はuseUserData内のスピナーが代わりに表示される
+        fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
@@ -138,6 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setProfile(null);
     setIsRecoveryMode(false);
+    // ログアウト時に保存していたビュー状態をクリア
+    sessionStorage.removeItem('habimon_view');
     // パスワードリセットリンク等のURLハッシュをクリア
     if (window.location.hash) {
       window.history.replaceState(null, '', window.location.pathname);

@@ -59,8 +59,16 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 function MainApp() {
   const { profile, signOut } = useAuth();
   const { userData, loading, updateUser, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
-  const [currentView, setCurrentView] = useState<ViewType>('home');
+  const [currentView, _setCurrentView] = useState<ViewType>(
+    () => (sessionStorage.getItem('habimon_view') as ViewType) || 'home'
+  );
+  const setCurrentView = _setCurrentView; // keep for type compatibility
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleSetView = (view: ViewType) => {
+    handleSetView(view);
+    sessionStorage.setItem('habimon_view', view);
+  };
 
   // ショップを開くたびにDBから最新の申請状態・コイン残高を再取得
   useEffect(() => {
@@ -115,9 +123,9 @@ function MainApp() {
           isFirstTime={!userData.selectedCharacterId}
           onSelect={async (characterId) => {
             await updateUser({ ...userData, selectedCharacterId: characterId });
-            setCurrentView('home');
+            handleSetView('home');
           }}
-          onBack={userData.selectedCharacterId ? () => setCurrentView('home') : undefined}
+          onBack={userData.selectedCharacterId ? () => handleSetView('home') : undefined}
         />
       </div>
     );
@@ -130,7 +138,7 @@ function MainApp() {
         <AdminDashboard />
         <div className="fixed bottom-4 right-4 flex gap-2">
           <button
-            onClick={() => { refreshFromDB(); setCurrentView('home'); }}
+            onClick={() => { refreshFromDB(); handleSetView('home'); }}
             className="px-4 py-2 bg-navy text-white rounded-full text-sm shadow-lg hover:bg-navy-light transition-colors min-h-12"
           >
             利用者画面へ
@@ -174,7 +182,7 @@ function MainApp() {
             user={userData}
             onUpdateUser={(u) => updateUser(u)}
             onReset={() => {}}
-            onOpenCharacterSelect={() => setCurrentView('character-select')}
+            onOpenCharacterSelect={() => handleSetView('character-select')}
             onLogout={() => setShowLogoutConfirm(true)}
           />
         )}
@@ -204,7 +212,7 @@ function MainApp() {
           ] as const).map(({ view, icon: Icon, label }) => (
             <button
               key={view}
-              onClick={() => setCurrentView(view)}
+              onClick={() => handleSetView(view)}
               className={`flex-1 flex flex-col items-center py-2 pt-3 min-h-14 transition-colors ${
                 currentView === view
                   ? view === 'shop' ? 'text-amber-600' : 'text-main'
@@ -219,7 +227,7 @@ function MainApp() {
           {/* 管理者ボタン（管理者のみ表示） */}
           {profile?.is_admin && (
             <button
-              onClick={() => setCurrentView('admin')}
+              onClick={() => handleSetView('admin')}
               className="flex-1 flex flex-col items-center py-2 pt-3 min-h-14 text-gray-400 hover:text-navy transition-colors"
               aria-label="管理者"
             >
