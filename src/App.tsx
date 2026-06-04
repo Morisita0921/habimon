@@ -59,10 +59,9 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 function MainApp() {
   const { profile, signOut } = useAuth();
   const { userData, loading, updateUser, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
-  const [currentView, _setCurrentView] = useState<ViewType>(
+  const [currentView] = useState<ViewType>(
     () => (sessionStorage.getItem('habimon_view') as ViewType) || 'home'
   );
-  const setCurrentView = _setCurrentView; // keep for type compatibility
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleSetView = (view: ViewType) => {
