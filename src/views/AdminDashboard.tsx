@@ -5,6 +5,17 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getTodayString, getBusinessDaysInMonth } from '../utils/dateUtils';
 import { useAdminData } from '../hooks/useAdminData';
 import { useAuth } from '../contexts/AuthContext';
+import { useCharacters } from '../hooks/useCharacters';
+
+const LEVEL_THRESHOLDS = [0, 100, 400, 800, 1200];
+function getExpProgress(level: number, totalExp: number) {
+  if (level >= 5) return { current: totalExp, needed: 1200, percent: 100 };
+  const cur = LEVEL_THRESHOLDS[level - 1] ?? 0;
+  const next = LEVEL_THRESHOLDS[level] ?? 1200;
+  const current = totalExp - cur;
+  const needed = next - cur;
+  return { current, needed, percent: Math.min(100, Math.round((current / needed) * 100)) };
+}
 import AdminCoinGrant from './AdminCoinGrant';
 import AdminExchangeRequests from './AdminExchangeRequests';
 import AdminUserCreate from './AdminUserCreate';
@@ -21,6 +32,10 @@ export default function AdminDashboard() {
   const { facilityData: facility, loading, updateUser: onUpdateUser, processExchangeRequest, toggleAdmin, updateUserName, deleteUser, refresh: fetchAllData } = useAdminData();
   const { profile } = useAuth();
   const isDeveloper = profile?.is_developer === true;
+  const { characters } = useCharacters();
+  const charMap = useMemo(() =>
+    Object.fromEntries(characters.map((c) => [c.id, c])),
+  [characters]);
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
@@ -428,7 +443,9 @@ export default function AdminDashboard() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-gray-500 font-medium">名前</th>
-                  <th className="px-4 py-3 text-center text-gray-500 font-medium">レベル</th>
+                  <th className="px-4 py-3 text-center text-gray-500 font-medium">キャラクター</th>
+                  <th className="px-4 py-3 text-center text-gray-500 font-medium">レベル / EXP</th>
+                  <th className="px-4 py-3 text-center text-gray-500 font-medium">コイン</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">今月出席</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">出席率</th>
                   <th className="px-4 py-3 text-center text-gray-500 font-medium">最終出席日</th>
@@ -479,9 +496,53 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     </td>
+                    {/* キャラクター */}
                     <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center px-2 py-1 bg-main/10 text-main-dark rounded-full text-xs font-bold">
-                        Lv.{u.level}
+                      {(() => {
+                        const char = charMap[u.selectedCharacterId ?? ''];
+                        const imgUrl = char?.forms.find(f => f.levels.includes(u.level))?.imageUrl ?? char?.thumbnail;
+                        return char ? (
+                          <div className="flex flex-col items-center gap-1">
+                            {imgUrl
+                              ? <img src={imgUrl} alt={char.name} className="w-10 h-10 object-contain" />
+                              : <div className="w-10 h-10 bg-gray-100 rounded-full" />}
+                            <span className="text-xs text-gray-500">{char.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300">未選択</span>
+                        );
+                      })()}
+                    </td>
+                    {/* レベル / EXP */}
+                    <td className="px-4 py-3 text-center">
+                      {(() => {
+                        const { current, needed, percent } = getExpProgress(u.level, u.exp);
+                        return (
+                          <div className="flex flex-col items-center gap-1 min-w-[80px]">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-main/10 text-main-dark rounded-full text-xs font-bold">
+                              Lv.{u.level}
+                            </span>
+                            {u.level < 5 ? (
+                              <>
+                                <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-main to-sub rounded-full"
+                                    style={{ width: `${percent}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-gray-400">{current}/{needed}</span>
+                              </>
+                            ) : (
+                              <span className="text-[10px] text-amber-500 font-bold">MAX ✨</span>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    {/* コイン */}
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-amber-600">
+                        🪙 {u.akashiCoins.toLocaleString('ja-JP')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center font-medium">{monthCheckIns}日</td>
