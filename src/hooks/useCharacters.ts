@@ -9,20 +9,28 @@ interface CharacterRow {
   thumbnail_url: string | null;
   form1_image_url: string;
   form2_image_url: string;
+  form3_image_url: string | null;
   available: boolean;
   sort_order: number;
 }
 
 function rowToCharacter(row: CharacterRow): CharacterDefinition {
+  const hasForm3 = !!row.form3_image_url;
   return {
     id: row.id,
     name: row.name,
     description: row.description ?? '',
     thumbnail: row.thumbnail_url ?? row.form1_image_url,
-    forms: [
-      { levels: [1, 2], imageUrl: row.form1_image_url, label: '第一形態' },
-      { levels: [3, 4, 5], imageUrl: row.form2_image_url, label: '第二形態' },
-    ],
+    forms: hasForm3
+      ? [
+          { levels: [1, 2], imageUrl: row.form1_image_url, label: '第一形態' },
+          { levels: [3, 4], imageUrl: row.form2_image_url, label: '第二形態' },
+          { levels: [5],    imageUrl: row.form3_image_url!, label: '第三形態' },
+        ]
+      : [
+          { levels: [1, 2],    imageUrl: row.form1_image_url, label: '第一形態' },
+          { levels: [3, 4, 5], imageUrl: row.form2_image_url, label: '第二形態' },
+        ],
   };
 }
 
@@ -31,6 +39,7 @@ export interface CharacterRecord extends CharacterDefinition {
   sortOrder: number;
   form1ImageUrl: string;
   form2ImageUrl: string;
+  form3ImageUrl: string;
 }
 
 function rowToRecord(row: CharacterRow): CharacterRecord {
@@ -40,6 +49,7 @@ function rowToRecord(row: CharacterRow): CharacterRecord {
     sortOrder: row.sort_order,
     form1ImageUrl: row.form1_image_url,
     form2ImageUrl: row.form2_image_url,
+    form3ImageUrl: row.form3_image_url ?? '',
   };
 }
 
@@ -61,7 +71,7 @@ export function useCharacters() {
 
   const addCharacter = useCallback(async (input: {
     name: string; description: string;
-    form1ImageUrl: string; form2ImageUrl: string;
+    form1ImageUrl: string; form2ImageUrl: string; form3ImageUrl?: string;
   }) => {
     const id = `char-${Date.now()}`;
     const { error } = await supabase.from('characters').insert({
@@ -71,6 +81,7 @@ export function useCharacters() {
       thumbnail_url: input.form1ImageUrl,
       form1_image_url: input.form1ImageUrl,
       form2_image_url: input.form2ImageUrl,
+      form3_image_url: input.form3ImageUrl || null,
       available: true,
       sort_order: 99,
     });
@@ -80,7 +91,7 @@ export function useCharacters() {
 
   const updateCharacter = useCallback(async (id: string, input: {
     name?: string; description?: string;
-    form1ImageUrl?: string; form2ImageUrl?: string;
+    form1ImageUrl?: string; form2ImageUrl?: string; form3ImageUrl?: string;
   }) => {
     const updates: Record<string, unknown> = {};
     if (input.name !== undefined) updates.name = input.name;
@@ -90,6 +101,7 @@ export function useCharacters() {
       updates.thumbnail_url = input.form1ImageUrl;
     }
     if (input.form2ImageUrl !== undefined) updates.form2_image_url = input.form2ImageUrl;
+    if (input.form3ImageUrl !== undefined) updates.form3_image_url = input.form3ImageUrl || null;
     const { error } = await supabase.from('characters').update(updates).eq('id', id);
     if (error) throw new Error(error.message);
     await fetch();

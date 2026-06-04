@@ -11,9 +11,10 @@ interface FormValue {
   description: string;
   form1ImageUrl: string;
   form2ImageUrl: string;
+  form3ImageUrl: string;
 }
 
-const EMPTY_FORM: FormValue = { name: '', description: '', form1ImageUrl: '', form2ImageUrl: '' };
+const EMPTY_FORM: FormValue = { name: '', description: '', form1ImageUrl: '', form2ImageUrl: '', form3ImageUrl: '' };
 
 function ImagePreview({ url, label }: { url: string; label: string }) {
   const [error, setError] = useState(false);
@@ -126,6 +127,7 @@ function CharacterForm({ initial, onSubmit, onCancel, submitLabel }: CharacterFo
     if (!form.name.trim()) { setError('なまえは ひっすです'); return; }
     if (!form.form1ImageUrl.trim()) { setError('だいいちけいたいの がぞうは ひっすです'); return; }
     if (!form.form2ImageUrl.trim()) { setError('だいにけいたいの がぞうは ひっすです'); return; }
+    // form3は任意
     setSaving(true);
     try {
       await onSubmit(form);
@@ -165,10 +167,16 @@ function CharacterForm({ initial, onSubmit, onCancel, submitLabel }: CharacterFo
         placeholder="/characters/example/first.png"
       />
       <ImageUploadField
-        label="だいにけいたい がぞう (Lv3-5) *"
+        label="だいにけいたい がぞう (Lv3-4) *"
         value={form.form2ImageUrl}
         onChange={(v) => set('form2ImageUrl', v)}
         placeholder="/characters/example/second.png"
+      />
+      <ImageUploadField
+        label="だいさんけいたい がぞう (Lv5) ※任意"
+        value={form.form3ImageUrl}
+        onChange={(v) => set('form3ImageUrl', v)}
+        placeholder="/characters/example/third.png"
       />
 
       {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
@@ -206,6 +214,7 @@ export default function AdminCharacters() {
       description: form.description,
       form1ImageUrl: form.form1ImageUrl,
       form2ImageUrl: form.form2ImageUrl,
+      form3ImageUrl: form.form3ImageUrl || undefined,
     });
     setShowAdd(false);
   };
@@ -217,6 +226,7 @@ export default function AdminCharacters() {
       description: form.description,
       form1ImageUrl: form.form1ImageUrl,
       form2ImageUrl: form.form2ImageUrl,
+      form3ImageUrl: form.form3ImageUrl,
     });
     setEditTarget(null);
   };
@@ -297,6 +307,7 @@ export default function AdminCharacters() {
                     description: char.description,
                     form1ImageUrl: char.form1ImageUrl,
                     form2ImageUrl: char.form2ImageUrl,
+                    form3ImageUrl: char.form3ImageUrl,
                   }}
                   onSubmit={handleEdit}
                   onCancel={() => setEditTarget(null)}
@@ -323,6 +334,12 @@ export default function AdminCharacters() {
                     <ImagePreview url={char.form1ImageUrl} label="第一形態" />
                     <span className="text-gray-300 text-xs">→</span>
                     <ImagePreview url={char.form2ImageUrl} label="第二形態" />
+                    {char.form3ImageUrl && (
+                      <>
+                        <span className="text-gray-300 text-xs">→</span>
+                        <ImagePreview url={char.form3ImageUrl} label="第三形態" />
+                      </>
+                    )}
                   </div>
                 </div>
 
