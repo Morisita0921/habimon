@@ -230,16 +230,21 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
               </button>
             )}
           </div>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/80 hover:text-white transition-colors"
-              aria-label="ログアウト"
-            >
-              <LogOut size={13} />
-              <span className="text-xs font-heading">ログアウト</span>
-            </button>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-xs text-white/70 font-heading bg-black/20 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+              👤 {user.name}
+            </span>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/80 hover:text-white transition-colors"
+                aria-label="ログアウト"
+              >
+                <LogOut size={13} />
+                <span className="text-xs font-heading">ログアウト</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 2段目：EXPバー + コイン */}
