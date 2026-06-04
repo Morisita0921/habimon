@@ -69,9 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setSession(session);
       if (session?.user) {
-        // プロフィール取得が完了するまでローディング状態にする
-        setLoading(true);
-        fetchProfile(session.user.id).finally(() => setLoading(false));
+        if (event === 'SIGNED_IN') {
+          // 新規ログイン時のみローディング表示（プロフィール取得完了まで待機）
+          setLoading(true);
+          fetchProfile(session.user.id).finally(() => setLoading(false));
+        } else {
+          // TOKEN_REFRESHED等のタブ復帰・自動更新はサイレントに更新（画面リセットしない）
+          fetchProfile(session.user.id);
+        }
       } else {
         setProfile(null);
       }
