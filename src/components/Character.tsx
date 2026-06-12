@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import type { CharacterImages } from '../types';
+import type { CharacterImages, CharacterDefinition } from '../types';
 import { getCharacterById, getCharacterImageForLevel } from '../data/characters';
 
 interface CharacterProps {
@@ -10,15 +10,16 @@ interface CharacterProps {
   images?: CharacterImages;
   equippedCosmetics?: string[]; // （レガシー: 現在は表示しない）
   selectedCharacterId?: string; // キャラクターレジストリからの選択
+  characterDef?: CharacterDefinition; // 外部から直接渡すキャラ定義（DBキャラ対応）
 }
 
-export default function Character({ level, size = 200, animate = true, images, selectedCharacterId }: CharacterProps) {
+export default function Character({ level, size = 200, animate = true, images, selectedCharacterId, characterDef }: CharacterProps) {
   const [imgError, setImgError] = useState(false);
 
-  // 優先順位: 1) selectedCharacterId (レジストリ) → 2) カスタム images (旧システム) → 3) デフォルトSVG
-  const registryCharacter = getCharacterById(selectedCharacterId);
-  const registryImageUrl = registryCharacter
-    ? getCharacterImageForLevel(registryCharacter, level)
+  // 優先順位: 1) characterDef (外部渡し) → 2) selectedCharacterId (静的レジストリ) → 3) カスタム images (旧システム) → 4) デフォルトSVG
+  const resolvedCharacter = characterDef ?? getCharacterById(selectedCharacterId);
+  const registryImageUrl = resolvedCharacter
+    ? getCharacterImageForLevel(resolvedCharacter, level)
     : undefined;
   const customImageUrl = images?.[`lv${level}` as keyof CharacterImages];
   const imageUrl = registryImageUrl || customImageUrl;

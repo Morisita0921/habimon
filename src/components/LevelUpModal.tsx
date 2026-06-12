@@ -1,16 +1,18 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Character from './Character';
+import type { CharacterDefinition } from '../types';
 
 interface LevelUpModalProps {
   show: boolean;
   newLevel: number;
   onClose: () => void;
   selectedCharacterId?: string;
+  characterDef?: CharacterDefinition;
   equippedCosmetics?: string[];
   formLabel?: string; // 進化後のフォームラベル（例: "第二形態"）。指定時はこちらを表示
 }
 
-export default function LevelUpModal({ show, newLevel, onClose, selectedCharacterId, equippedCosmetics, formLabel }: LevelUpModalProps) {
+export default function LevelUpModal({ show, newLevel, onClose, selectedCharacterId, characterDef, equippedCosmetics, formLabel }: LevelUpModalProps) {
   const levelNames = ['', 'タマゴ', 'こども', 'せいちょう', 'しんか', 'さいしゅう'];
 
   return (
@@ -77,6 +79,7 @@ export default function LevelUpModal({ show, newLevel, onClose, selectedCharacte
                 size={180}
                 animate={true}
                 selectedCharacterId={selectedCharacterId}
+                characterDef={characterDef}
                 equippedCosmetics={equippedCosmetics}
               />
             </motion.div>

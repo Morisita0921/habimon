@@ -12,6 +12,7 @@ import { getTodayString } from '../utils/dateUtils';
 import { calculateCheckInExp, calculateNewLevel, EXP_VALUES } from '../utils/expCalculator';
 import { calculateCheckInCoins, formatCoins } from '../utils/coinCalculator';
 import { getCharacterById, getCharacterFormForLevel, isEvolutionLevel } from '../data/characters';
+import { useCharacters } from '../hooks/useCharacters';
 import { useOpeningSchedule } from '../hooks/useOpeningSchedule';
 import { useFacilitySettings } from '../hooks/useFacilitySettings';
 
@@ -36,7 +37,11 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
     pendingExpToNext?: number;
   }>({ show: false, fromUrl: '', toUrl: '' });
 
-  const selectedCharacter = getCharacterById(user.selectedCharacterId);
+  const { availableCharacters } = useCharacters();
+  // 静的レジストリ優先、なければDBキャラで補完（管理画面追加キャラ対応）
+  const selectedCharacter =
+    getCharacterById(user.selectedCharacterId) ??
+    availableCharacters.find((c) => c.id === user.selectedCharacterId);
   const { isOpenDay } = useOpeningSchedule();
   const { settings: facilitySettings } = useFacilitySettings();
 
@@ -177,6 +182,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
         newLevel={levelUpInfo.level}
         onClose={() => setLevelUpInfo({ show: false, level: 0 })}
         selectedCharacterId={user.selectedCharacterId}
+        characterDef={selectedCharacter}
         equippedCosmetics={user.equippedCosmetics}
         formLabel={levelUpInfo.formLabel}
       />
@@ -297,6 +303,7 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
             images={user.characterImages}
             equippedCosmetics={user.equippedCosmetics}
             selectedCharacterId={user.selectedCharacterId}
+            characterDef={selectedCharacter}
           />
         </motion.div>
 
