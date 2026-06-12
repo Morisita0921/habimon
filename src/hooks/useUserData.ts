@@ -81,15 +81,21 @@ export function useUserData() {
       submittedAt: r.submitted_at,
     }));
 
+    const charProgress = profile.character_progress ?? {};
+    // 選択中キャラの保存済み進捗があればそれを使う（切り替え後の整合性保持）
+    const currentCharId = profile.selected_character_id;
+    const savedProgress = currentCharId ? charProgress[currentCharId] : undefined;
+
     return {
       id: profile.id,
       name: profile.name,
       characterName: profile.character_name,
       selectedCharacterId: profile.selected_character_id ?? undefined,
       characterSize: profile.character_size ?? 280,
-      level: profile.level,
-      exp: profile.exp,
-      expToNext: profile.exp_to_next,
+      characterProgress: charProgress,
+      level: savedProgress?.level ?? profile.level,
+      exp: savedProgress?.exp ?? profile.exp,
+      expToNext: savedProgress?.expToNext ?? profile.exp_to_next,
       streak: profile.streak,
       totalCheckIns: profile.total_check_ins,
       badges: profile.badges,
@@ -149,6 +155,13 @@ export function useUserData() {
       }
     }
 
+    // キャラ別進捗も更新
+    const charId = userData.selectedCharacterId;
+    const updatedCharProgress = charId ? {
+      ...(userData.characterProgress ?? {}),
+      [charId]: { level: updates.level!, exp: updates.exp!, expToNext: updates.expToNext! },
+    } : (userData.characterProgress ?? {});
+
     // プロフィールを更新
     await supabase.from('profiles').update({
       level: updates.level,
@@ -158,13 +171,14 @@ export function useUserData() {
       total_check_ins: updates.totalCheckIns,
       badges: updates.badges,
       akashi_coins: updates.akashiCoins,
+      character_progress: updatedCharProgress,
       updated_at: new Date().toISOString(),
     }).eq('id', authUser.id);
 
     await refreshProfile();
 
     // ローカル状態を更新
-    setUserData((prev) => prev ? { ...prev, ...updates } : null);
+    setUserData((prev) => prev ? { ...prev, ...updates, characterProgress: updatedCharProgress } : null);
   }, [authUser, userData, refreshProfile]);
 
   // プロフィール更新（キャラ変更・コスメ等）
@@ -231,9 +245,31 @@ export function useUserData() {
     if (updates.akashiCoins !== undefined) dbUpdates.akashi_coins = updates.akashiCoins;
     if (updates.ownedCosmetics !== undefined) dbUpdates.owned_cosmetics = updates.ownedCosmetics;
     if (updates.equippedCosmetics !== undefined) dbUpdates.equipped_cosmetics = updates.equippedCosmetics;
-    if (updates.selectedCharacterId !== undefined) dbUpdates.selected_character_id = updates.selectedCharacterId;
     if (updates.characterName !== undefined) dbUpdates.character_name = updates.characterName;
     if (updates.characterSize !== undefined) dbUpdates.character_size = updates.characterSize;
+
+    // キャラ切り替え時：現キャラの進捗を保存し、新キャラの保存済み進捗（なければLv1）をロード
+    if (updates.selectedCharacterId !== undefined && userData && updates.selectedCharacterId !== userData.selectedCharacterId) {
+      const newCharId = updates.selectedCharacterId;
+      const prevCharId = userData.selectedCharacterId;
+      const progress = { ...(userData.characterProgress ?? {}) };
+
+      // 現キャラの進捗を保存
+      if (prevCharId) {
+        progress[prevCharId] = { level: userData.level, exp: userData.exp, expToNext: userData.expToNext };
+      }
+
+      // 新キャラの保存済み進捗 or 初期値
+      const next = progress[newCharId] ?? { level: 1, exp: 0, expToNext: 100 };
+
+      updates = { ...updates, level: next.level, exp: next.exp, expToNext: next.expToNext, characterProgress: progress };
+      dbUpdates.level = next.level;
+      dbUpdates.exp = next.exp;
+      dbUpdates.exp_to_next = next.expToNext;
+      dbUpdates.character_progress = progress;
+    }
+    if (updates.selectedCharacterId !== undefined) dbUpdates.selected_character_id = updates.selectedCharacterId;
+    if (updates.characterProgress !== undefined) dbUpdates.character_progress = updates.characterProgress;
 
     await supabase.from('profiles').update(dbUpdates).eq('id', authUser.id);
     await refreshProfile();
@@ -393,6 +429,13 @@ export function useUserData() {
     if (newReports.length >= 30 && !newBadges.includes('report-30')) newBadges.push('report-30');
     if (fullReportCount >= 5 && !newBadges.includes('report-full')) newBadges.push('report-full');
 
+    // キャラ別進捗も更新
+    const charId = userData.selectedCharacterId;
+    const updatedCharProgress = charId ? {
+      ...(userData.characterProgress ?? {}),
+      [charId]: { level: newLevel, exp: newExp, expToNext: expToNextValue },
+    } : (userData.characterProgress ?? {});
+
     // プロフィール更新
     await supabase.from('profiles').update({
       exp: newExp,
@@ -400,6 +443,7 @@ export function useUserData() {
       exp_to_next: expToNextValue,
       akashi_coins: userData.akashiCoins + coinGain,
       badges: newBadges,
+      character_progress: updatedCharProgress,
       updated_at: now,
     }).eq('id', authUser.id);
 
@@ -412,6 +456,7 @@ export function useUserData() {
       expToNext: expToNextValue,
       akashiCoins: prev.akashiCoins + coinGain,
       badges: newBadges,
+      characterProgress: updatedCharProgress,
       dailyReports: newReports,
       coinHistory: [
         ...prev.coinHistory,

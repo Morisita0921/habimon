@@ -11,6 +11,7 @@ export interface User {
   characterImages?: CharacterImages; // カスタム画像（事業所設定用）
   selectedCharacterId?: string; // 選択中のキャラクターID（character registry 参照）
   characterSize?: number; // キャラクター表示サイズ（px, デフォルト280）
+  characterProgress?: Record<string, { level: number; exp: number; expToNext: number }>; // キャラ別進捗
   level: number; // 1-5
   exp: number;
   expToNext: number;
@@ -141,6 +142,7 @@ export interface Profile {
   character_name: string;
   selected_character_id: string | null;
   character_size: number | null;
+  character_progress: Record<string, { level: number; exp: number; expToNext: number }> | null;
   level: number;
   exp: number;
   exp_to_next: number;
