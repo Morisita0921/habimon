@@ -37,11 +37,11 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
     pendingExpToNext?: number;
   }>({ show: false, fromUrl: '', toUrl: '' });
 
-  const { availableCharacters } = useCharacters();
-  // 静的レジストリ優先、なければDBキャラで補完（管理画面追加キャラ対応）
+  const { characters: dbCharacters } = useCharacters();
+  // 静的レジストリ優先、なければDBキャラ全件で補完（available問わず）
   const selectedCharacter =
     getCharacterById(user.selectedCharacterId) ??
-    availableCharacters.find((c) => c.id === user.selectedCharacterId);
+    dbCharacters.find((c) => c.id === user.selectedCharacterId);
   const { isOpenDay } = useOpeningSchedule();
   const { settings: facilitySettings } = useFacilitySettings();
 
