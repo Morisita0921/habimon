@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Coins, Sparkles, LogOut } from 'lucide-react';
+import { Flame, Coins, Sparkles, LogOut, Minus, Plus } from 'lucide-react';
 import type { User, CoinTransaction } from '../types';
 import Character from '../components/Character';
 import CheckInButton from '../components/CheckInButton';
@@ -19,14 +19,21 @@ import { useFacilitySettings } from '../hooks/useFacilitySettings';
 interface UserHomeProps {
   user: User;
   onUpdateUser: (user: User) => void;
+  onUpdateCharacterSize?: (size: number) => void;
   onReset: () => void;
   onOpenCharacterSelect?: () => void;
   onLogout?: () => void;
 }
 
-export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpenCharacterSelect, onLogout }: UserHomeProps) {
+const CHAR_SIZE_MIN = 160;
+const CHAR_SIZE_MAX = 400;
+const CHAR_SIZE_DEFAULT = 280;
+
+export default function UserHome({ user, onUpdateUser, onUpdateCharacterSize, onReset: _onReset, onOpenCharacterSelect, onLogout }: UserHomeProps) {
   const [showConfetti, setShowConfetti] = useState(false);
   const [levelUpInfo, setLevelUpInfo] = useState<{ show: boolean; level: number; formLabel?: string }>({ show: false, level: 0 });
+  const [charSize, setCharSize] = useState(user.characterSize ?? CHAR_SIZE_DEFAULT);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [evolutionInfo, setEvolutionInfo] = useState<{
     show: boolean;
     fromUrl: string;
@@ -52,6 +59,14 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
   const currentHour = new Date().getHours();
   const canCheckInByTime = currentHour >= 9;
   const isClosedDay = !isOpenDay(today);
+
+  const handleSizeChange = (newSize: number) => {
+    setCharSize(newSize);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      onUpdateCharacterSize?.(newSize);
+    }, 600);
+  };
 
   const handleCheckIn = useCallback((mood: 1 | 2 | 3 | 4 | 5) => {
     const expGain = calculateCheckInExp(user.streak) + EXP_VALUES.moodRecord;
@@ -299,13 +314,41 @@ export default function UserHome({ user, onUpdateUser, onReset: _onReset, onOpen
           />
           <Character
             level={user.level}
-            size={280}
+            size={charSize}
             images={user.characterImages}
             equippedCosmetics={user.equippedCosmetics}
             selectedCharacterId={user.selectedCharacterId}
             characterDef={selectedCharacter}
           />
         </motion.div>
+
+        {/* キャラサイズ調整スライダー */}
+        <div className="flex items-center gap-2 mt-1 px-4">
+          <button
+            onClick={() => handleSizeChange(Math.max(CHAR_SIZE_MIN, charSize - 20))}
+            className="w-7 h-7 rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-white/60 active:scale-90 transition-all"
+            aria-label="キャラを小さく"
+          >
+            <Minus size={14} />
+          </button>
+          <input
+            type="range"
+            min={CHAR_SIZE_MIN}
+            max={CHAR_SIZE_MAX}
+            step={20}
+            value={charSize}
+            onChange={(e) => handleSizeChange(Number(e.target.value))}
+            className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{ accentColor: 'rgba(255,255,255,0.8)' }}
+          />
+          <button
+            onClick={() => handleSizeChange(Math.min(CHAR_SIZE_MAX, charSize + 20))}
+            className="w-7 h-7 rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-white/60 active:scale-90 transition-all"
+            aria-label="キャラを大きく"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
 
         {/* チェックインボタン（キャラの足元） */}
         <div className="flex justify-center mt-2 z-10">

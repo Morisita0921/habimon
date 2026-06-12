@@ -10,6 +10,7 @@ export interface User {
   characterName: string;
   characterImages?: CharacterImages; // カスタム画像（事業所設定用）
   selectedCharacterId?: string; // 選択中のキャラクターID（character registry 参照）
+  characterSize?: number; // キャラクター表示サイズ（px, デフォルト280）
   level: number; // 1-5
   exp: number;
   expToNext: number;
@@ -139,6 +140,7 @@ export interface Profile {
   name: string;
   character_name: string;
   selected_character_id: string | null;
+  character_size: number | null;
   level: number;
   exp: number;
   exp_to_next: number;

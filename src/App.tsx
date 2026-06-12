@@ -58,7 +58,7 @@ function LogoutConfirm({ show, onClose, onConfirm }: {
 // ===== 認証済みメイン画面 =====
 function MainApp() {
   const { profile, signOut } = useAuth();
-  const { userData, loading, updateUser, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
+  const { userData, loading, updateUser, updateCharacterSize, addExchangeRequest, submitDailyReport, refreshFromDB } = useUserData();
   const [currentView, setCurrentView] = useState<ViewType>(
     () => (sessionStorage.getItem('habimon_view') as ViewType) || 'home'
   );
@@ -180,6 +180,7 @@ function MainApp() {
           <UserHome
             user={userData}
             onUpdateUser={(u) => updateUser(u)}
+            onUpdateCharacterSize={updateCharacterSize}
             onReset={() => {}}
             onOpenCharacterSelect={() => handleSetView('character-select')}
             onLogout={() => setShowLogoutConfirm(true)}

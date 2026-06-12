@@ -86,6 +86,7 @@ export function useUserData() {
       name: profile.name,
       characterName: profile.character_name,
       selectedCharacterId: profile.selected_character_id ?? undefined,
+      characterSize: profile.character_size ?? 280,
       level: profile.level,
       exp: profile.exp,
       expToNext: profile.exp_to_next,
@@ -232,6 +233,7 @@ export function useUserData() {
     if (updates.equippedCosmetics !== undefined) dbUpdates.equipped_cosmetics = updates.equippedCosmetics;
     if (updates.selectedCharacterId !== undefined) dbUpdates.selected_character_id = updates.selectedCharacterId;
     if (updates.characterName !== undefined) dbUpdates.character_name = updates.characterName;
+    if (updates.characterSize !== undefined) dbUpdates.character_size = updates.characterSize;
 
     await supabase.from('profiles').update(dbUpdates).eq('id', authUser.id);
     await refreshProfile();
@@ -437,5 +439,12 @@ export function useUserData() {
     return { expGain, coinGain, newBadges: newBadges.filter((b) => !userData.badges.includes(b)) };
   }, [authUser, userData, refreshProfile]);
 
-  return { userData, loading, checkIn, updateUser, addExchangeRequest, setUserData, submitDailyReport, refreshFromDB };
+  // キャラサイズだけ即時保存（スライダー操作用・refreshProfile不要）
+  const updateCharacterSize = useCallback(async (size: number) => {
+    if (!authUser) return;
+    setUserData((prev) => prev ? { ...prev, characterSize: size } : null);
+    await supabase.from('profiles').update({ character_size: size }).eq('id', authUser.id);
+  }, [authUser]);
+
+  return { userData, loading, checkIn, updateUser, updateCharacterSize, addExchangeRequest, setUserData, submitDailyReport, refreshFromDB };
 }
